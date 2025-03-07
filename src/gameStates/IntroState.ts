@@ -18,6 +18,6 @@ export class IntroState extends GameState
         this.gameScene.add(cube);
 
         const router = Singleton.get().Router;
-        setTimeout(() => { router.goToGameState(new MainGameState(this.RenderContext)); }, 3000);
+        setTimeout(() => { router.goToGameState(new MainGameState(this.RenderContext, this.resourceModule)); }, 3000);
     }
 }

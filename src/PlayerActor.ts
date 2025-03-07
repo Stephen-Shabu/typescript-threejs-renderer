@@ -1,6 +1,4 @@
 import { Actor } from "./core/Actor";
-import { BufferGeometry, Quaternion } from 'three';
-import { Material } from 'three';
 import Singleton from "./Singleton";
 import RAPIER from "./PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
@@ -14,6 +12,8 @@ import { AnimationMixer } from "three/src/animation/AnimationMixer";
 import { AnimationClip } from "three/src/animation/AnimationClip";
 import { AnimationAction } from "three/src/animation/AnimationAction";
 import { Object3D } from 'three';
+import { Resources } from "./core/Resources";
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 
 export class PlayerActor extends Actor
 {
@@ -64,7 +64,32 @@ export class PlayerActor extends Actor
         head.position.z = 0.5;
     }
 
-    public setUpAnimations(group: Object3D): void
+    public setupCharacterMesh(resourceModule: Resources, alias: string): void
+    {
+        const clonedCharacter = SkeletonUtils.clone(resourceModule.getAsset(alias));
+        clonedCharacter.scale.set(0.01, 0.01, 0.01);
+        clonedCharacter.castShadow = true;
+
+        //const clonedWeapon = SkeletonUtils.clone(resourceModule.getAsset("sm_short_sword"));
+        //clonedWeapon.scale.set(0.006, 0.006, 0.006);
+
+        clonedCharacter.traverse((object): void =>
+        {
+            //console.log(object);
+            if (object.name.startsWith('PalmR'))
+            {
+                //console.log("found " + object.name);
+                //object.add(clonedWeapon);
+                //clonedWeapon.rotation.set(0, 0, Math.PI * .5);
+            }
+        });
+
+        this.attachObject(clonedCharacter);
+        this.setUpAnimations(clonedCharacter);
+        clonedCharacter.position.y = -1;
+    }
+
+    private setUpAnimations(group: Object3D): void
     {
         this.characterAnimationMixer = new AnimationMixer(group);
         this.characterAnimationClips = group.animations;
@@ -132,8 +157,6 @@ export class PlayerActor extends Actor
             {
                 console.log("dogde pressed");
                 this.canDodge = true;
-                this.currentClip = AnimationClip.findByName(this.characterAnimationClips, 'HumanArmature|Roll');
-                setTimeout((): void => { this.canDodge = false; console.log("roll complete"); }, this.currentClip.duration * 1000);
             }
         }
 
@@ -144,12 +167,17 @@ export class PlayerActor extends Actor
                 console.log("action pressed");
 
                 this.canAttack = true;
-                //this.currentClip = AnimationClip.findByName(this.characterAnimationClips, 'Armature|spartan_slash_l');
-                this.currentClip = AnimationClip.findByName(this.characterAnimationClips, 'HumanArmature|Run_swordAttack');
+                this.currentClip = AnimationClip.findByName(this.characterAnimationClips, 'Armature|spartan_slash_l');
 
-                setTimeout((): void => {
+                setTimeout((): void =>
+                {
                     const thrustDirection = this.actorRootObject?.getWorldDirection(new Vector3());
-                    //this.characterObject.position.addScaledVector(thrustDirection, 0.3);
+
+                    if (thrustDirection)
+                    {
+                        this.actorRigidbody?.setLinvel(thrustDirection.multiplyScalar(30), true);
+                    }
+
                 }, (this.currentClip.duration * 1000) * 0.3);
 
                 setTimeout((): void => { this.canAttack = false; console.log("action complete"); }, this.currentClip.duration * 1000);
@@ -158,17 +186,17 @@ export class PlayerActor extends Actor
 
         if (!this.canAttack && !this.canDodge)
         {
-            /*.currentClip = direction.lengthSq() > 0.25 ? AnimationClip.findByName(this.characterAnimationClips, 'Armature|spartan_run') :
-                AnimationClip.findByName(this.characterAnimationClips, 'Armature|spartan_idle');*/
-            this.currentClip = direction.lengthSq() > 0.25 ? AnimationClip.findByName(this.characterAnimationClips, 'HumanArmature|Run') :
-                AnimationClip.findByName(this.characterAnimationClips, 'HumanArmature|Idle');
+            this.currentClip = direction.lengthSq() > 0.25 ? AnimationClip.findByName(this.characterAnimationClips, 'Armature|spartan_run') :
+                AnimationClip.findByName(this.characterAnimationClips, 'Armature|spartan_idle');
         }
 
         const previousAction = this.currentAction;
         this.currentAction = this.characterAnimationMixer?.clipAction(this.currentClip);
 
-        if (previousAction !== this.currentAction) {
-            if (previousAction) {
+        if (previousAction !== this.currentAction)
+        {
+            if (previousAction)
+            {
                 previousAction.fadeOut(0.25);
             }
 
@@ -180,6 +208,14 @@ export class PlayerActor extends Actor
         }
 
         if (this.characterAnimationMixer) this.characterAnimationMixer.update(deltaTime);
+    }
+
+    private performDodge(): void
+    {
+        if (this.characterAnimationClips == undefined) return;
+
+        this.currentClip = AnimationClip.findByName(this.characterAnimationClips, 'HumanArmature|Roll');
+        setTimeout((): void => { this.canDodge = false; console.log("roll complete"); }, this.currentClip.duration * 1000);
     }
 
     public calculateSpeed(canAccelerate: boolean, dt: number): number

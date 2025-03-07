@@ -3,6 +3,7 @@ import { GridHelper } from "three/src/helpers/GridHelper";
 import { AxesHelper } from "three/src/helpers/AxesHelper";
 import { OrbitalCamera } from './OrbitalCamera';
 import { Renderer } from "./Renderer";
+import { Resources } from "./core/Resources";
 
 export class GameState
 {
@@ -25,7 +26,7 @@ export class GameState
     protected gameCamera: OrbitalCamera;
     protected renderContext: Renderer;
 
-    constructor(renderer: Renderer)
+    constructor(renderer: Renderer, protected resourceModule: Resources)
     {
         this.renderContext = renderer;
         this.gameScene = new Scene();

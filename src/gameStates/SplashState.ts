@@ -24,7 +24,7 @@ export class SplashState extends GameState
 
         console.log("Splash State initialised");
         const router = Singleton.get().Router;
-        setTimeout(() => { router.goToGameState(new IntroState(this.RenderContext)); }, 6000);
+        setTimeout(() => { router.goToGameState(new IntroState(this.RenderContext, this.resourceModule)); }, 6000);
     }
 
     public endGameState(): void

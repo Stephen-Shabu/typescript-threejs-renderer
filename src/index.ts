@@ -4,15 +4,17 @@ import { GameState } from './GameState';
 import { SplashState } from './gameStates/SplashState';
 import { MainGameState } from './gameStates/MainGameState';
 import Singleton from './Singleton';
-
+import { Resources } from "./core/Resources"
 export class App
 {
     private renderBackend: Renderer;
+    private resourceModule: Resources;
     private isAppRunning: boolean = false;
 
     constructor()
     {
         this.renderBackend = new Renderer();
+        this.resourceModule = new Resources();
         this.isAppRunning = true;
     }
 
@@ -25,9 +27,10 @@ export class App
 
         const singleton = Singleton.get();
 
+        await this.resourceModule.init();
         await singleton.PhysicsWorld.initAsync();
 
-        singleton.Router.goToGameState(new MainGameState(this.renderBackend));
+        singleton.Router.goToGameState(new MainGameState(this.renderBackend, this.resourceModule));
 
         this.renderBackend.drawScene(updateGameState);
     }

@@ -1,28 +1,11 @@
 import { GameState } from "../GameState";
 import Singleton from "../Singleton";
 import { Vector3 } from 'three/src/math/Vector3.js';
-import { AmbientLight } from "three/src/lights/AmbientLight";
 import { HemisphereLight } from "three/src/lights/HemisphereLight";
-import { HemisphereLightHelper } from "three/src/helpers/HemisphereLightHelper";
-import { DirectionalLight } from "three/src/lights/DirectionalLight";
-import { DirectionalLightHelper } from "three/src/helpers/DirectionalLightHelper";
-import { Color } from "three/src/math/Color";
-import { Fog } from "three/src/scenes/Fog";
-import { Mesh } from "three/src/objects/Mesh";
-import { SphereGeometry } from "three/src/geometries/SphereGeometry";
 import { PlaneGeometry } from "three/src/geometries/PlaneGeometry";
-import { MeshLambertMaterial } from "three/src/materials/MeshLambertMaterial";
-import { ShaderMaterial } from "three/src/materials/ShaderMaterial";
-import { BackSide } from "three/src/constants";
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { TextureLoader } from 'three/src/loaders/TextureLoader';
-import { LoadingManager } from 'three/src/loaders/LoadingManager';
 import { Group } from "three/src/objects/Group.js";
-import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { MeshStandardMaterial, Vector2 } from "three";
 import { Texture } from "three";
-import { Box3 } from "three";
 import { BoxGeometry } from "three";
 import { CapsuleGeometry } from "three";
 import { LineSegments } from "three";
@@ -44,81 +27,20 @@ export class MainGameState extends GameState
     {
         super.initialise();
 
-        const loadingManager = new LoadingManager();
-        const loader = new FBXLoader(loadingManager);
-        const textureLoader = new TextureLoader(loadingManager);
-        const gltfLoader = new GLTFLoader(loadingManager);
+        const physics = Singleton.get().PhysicsWorld;
 
-        const environmentTextures =
+        this.resourceModule.loadbundle((loadedBundles) =>
         {
-            alphaMap: { url: 'assets/models/Courthouse.glb', tex: new Texture() },
-        }
-
-        const environmentModels =
-        {
-            courtHouse: { url: 'assets/models/Courthouse.glb', obj: new Group() },
-            tree: { url: 'assets/models/common_tree_1.fbx', obj: new Group() }
-        }
-
-        const characterModels =
-        {
-            player: { url: 'assets/models/lone_knight.fbx', obj: new Group() }
-        }
-
-        const propModels =
-        {
-            shortSword: { url: 'assets/models/short_sword.fbx', obj: new Group() }
-        }
-
-        loadingManager.onLoad = (): void =>
-        {
-            environmentModels.courtHouse.obj.castShadow = true;
-            environmentModels.courtHouse.obj.receiveShadow = true;
-            environmentModels.tree.obj.castShadow = true;
-            environmentModels.tree.obj.receiveShadow = true;
-
-            const physics = Singleton.get().PhysicsWorld;
+            this.player.addToScene(this.gameScene);
+            this.player.setupCharacterMesh(this.resourceModule, "sm_lone_spartan");
 
             if (physics.World)
             {
-                this.player.addToScene(this.gameScene);
-                const clonedCharacter = SkeletonUtils.clone(characterModels.player.obj);
-                const clonedWeapon = propModels.shortSword.obj.clone();
-                clonedCharacter.scale.set(0.004, 0.004, 0.004);
-                clonedWeapon.scale.set(0.006, 0.006, 0.006);
-                clonedCharacter.castShadow = true;
-
-                clonedCharacter.traverse((object): void =>
-                {
-                    console.log(object);
-                    if (object.name.startsWith('PalmR'))
-                    {
-                        console.log("found " + object.name);
-                        object.add(clonedWeapon);
-                        clonedWeapon.rotation.set(0, 0, Math.PI * .5);
-                    }
-                });
-
-                this.player.attachObject(clonedCharacter);
-                this.player.setUpAnimations(clonedCharacter);
-                clonedCharacter.position.y = -1;
-
-                physics.addActor(this.player);
-
-                const capsuleColDesc = RAPIER.ColliderDesc.capsule(0.5, 0.5);
-                const capsuleRbDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 10);
-                const capsule: DynamicActor = new DynamicActor(new CapsuleGeometry(0.5), new MeshStandardMaterial(), capsuleColDesc, capsuleRbDesc);
-                capsule.addToScene(this.gameScene);
-                physics.addActor(capsule);
-
-                const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5).setMass(1).setRestitution(0.1).setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS | RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS);
-                const cubeRbDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1, 0).setCanSleep(false);
-                const cube: DynamicActor = new DynamicActor(new BoxGeometry(1, 1, 1), new MeshStandardMaterial(), cubeColliderDesc, cubeRbDesc);
-                cube.addToScene(this.gameScene);
-                physics.addActor(cube);
-
                 const groundColliderDesc = RAPIER.ColliderDesc.cuboid(20.0, 0.1, 20.0);
-                const floorAlphaTexture = environmentTextures.alphaMap.tex;
+
+                let floorAlphaTexture = new Texture();
+                floorAlphaTexture = this.resourceModule.getAsset("t_alpha_01_d");
+
                 const groundGeo = new PlaneGeometry(40, 40);
                 const groundMat = new MeshStandardMaterial({ color: 0xffffff, alphaMap: floorAlphaTexture, transparent: true });
                 groundMat.color.setHSL(0.095, 1, 0.75);
@@ -126,115 +48,32 @@ export class MainGameState extends GameState
                 const floorActor: StaticActor = new StaticActor(groundGeo, groundMat, groundColliderDesc, physics.World.createCollider(groundColliderDesc));
                 floorActor.Mesh!.receiveShadow = true;
                 floorActor.Root!.rotation.x = -Math.PI / 2;
+
                 floorActor.addToScene(this.gameScene);
                 physics.addActor(floorActor);
-
-                this.debugMesh.frustumCulled = false;
-                this.gameScene.add(this.debugMesh);
-
-                const minimumRadius = 5;
-                const maxSampleCount = 30;
-                const cellSize = minimumRadius / Math.sqrt(2);
-                let trees: StaticActor[] = [];
-                let samples: Vector2[] = [];
-                const xSize: number = 20;
-                const zSize: number = 20;
-                const cols: number = Math.floor(zSize / cellSize);
-                const rows: number = Math.floor(xSize / cellSize);
-
-                const grid: Vector2[] | number[] = [];
-                const activePoints: Vector2[] = [];
-
-                for (let i = 0; i < cols * rows; i++)
-                {
-                    grid[i] = -1;
-                }
-
-                console.log("grid length: " + grid.length);
-
-                const angle = Math.random() * Math.PI * 2;
-                const radius = 10 + Math.random() * 10;
-                let x = -10;
-                let z = -10;
-                console.log("rand x " + x + "rand z " + z);
-                const iPos: Vector2 | number = new Vector2(x, z);
-                const iRow = Math.floor(x / cellSize);
-                const iCol = Math.floor(z / cellSize);
-                const index = Math.abs(iRow + iCol * cols);
-
-                console.log("initial row " + iRow + "initial col " + iCol);
-                console.log("index " + index);
-
-                grid[index] = iPos;
-                activePoints.push(iPos);
-
-                for (let i = 0; i < grid.length; i++)
-                {
-                    if (grid[i] != -1)
-                    {
-                        const clonedTree = environmentModels.tree.obj.clone();
-                        const treeColDesc = RAPIER.ColliderDesc.cylinder(2.5, 1);
-                        const treeCol = physics.World.createCollider(treeColDesc);
-                        const treeActor: StaticActor = new StaticActor(new BoxGeometry(1, 1, 1), new MeshStandardMaterial(), treeColDesc, treeCol, clonedTree);
-                        treeActor.Mesh!.receiveShadow = true;
-                        treeActor.addToScene(this.gameScene, false);
-                        physics.addActor(treeActor);
-
-                        const pos = grid[i] as Vector2;
-                        console.log("Grid Pos X: " + pos.x + "Grid Pos Z: " + pos.y);
-
-                        treeActor.Root!.position.x = pos.x;
-                        treeActor.Root!.position.z = pos.y;
-                        treeActor.updatePositionAndRotation();
-                    }
-                }
             }
-        };
 
-        textureLoader.load('assets/textures/alpha.jpg', (tex): void =>
-        {
-            environmentTextures.alphaMap.tex = tex;
-        }, undefined, (error) => {
-            console.error(" texture assets: " + error);
-        });
+            physics.addActor(this.player);
 
-        gltfLoader.load(environmentModels.courtHouse.url, (gltf) =>
-        {
-            environmentModels.courtHouse.obj = gltf.scene;
-        }, undefined, (error) => {
-            console.error(" environment assets: " + error);
-        });
+            this.spawnTreeElements();
 
-        loader.load(environmentModels.tree.url, (object) =>
-        {
-            environmentModels.tree.obj = object;
-            environmentModels.tree.obj.scale.set(0.02, 0.02, 0.02);
-            environmentModels.tree.obj.position.set(0, 0, 50);
-        }, undefined, (error) => {
-            console.error(" environment assets: " + error);
-        });
+        }, "character-models", "utility-textures", "environment-models");
 
-        for (const model of Object.values(characterModels))
-        {
-            loader.load(model.url, (object) => {
-                model.obj = object;
+        const capsuleColDesc = RAPIER.ColliderDesc.capsule(0.5, 0.5);
+        const capsuleRbDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 10);
+        const capsule: DynamicActor = new DynamicActor(new CapsuleGeometry(0.5), new MeshStandardMaterial(), capsuleColDesc, capsuleRbDesc);
+        capsule.addToScene(this.gameScene);
+        physics.addActor(capsule);
 
-            }, undefined, (error) => {
-                console.error(error);
-            });
-        }
+        const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5).setMass(1).setRestitution(0.1).setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS | RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS);
+        const cubeRbDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1, 0).setCanSleep(false);
+        const cube: DynamicActor = new DynamicActor(new BoxGeometry(1, 1, 1), new MeshStandardMaterial(), cubeColliderDesc, cubeRbDesc);
+        cube.addToScene(this.gameScene);
+        physics.addActor(cube);
 
-        for (const model of Object.values(propModels))
-        {
-            loader.load(model.url, (object) => {
-                model.obj = object;
+        this.debugMesh.frustumCulled = false;
+        this.gameScene.add(this.debugMesh);
 
-            }, undefined, (error) => {
-                console.error(error);
-            });
-        }
-
-        
         const hemiLight = new HemisphereLight(0xffffff, 0xffffff, 2);
         hemiLight.color.setHSL(0.6, 1, 0.6);
         hemiLight.groundColor.setHSL(0.095, 1, 0.75);
@@ -242,6 +81,75 @@ export class MainGameState extends GameState
         this.gameScene.add(hemiLight);
 
         console.log("Main Game State initialised");
+    }
+
+    private spawnTreeElements(): void
+    {
+        const physics = Singleton.get().PhysicsWorld;
+
+        if (physics.World)
+        {
+            const minimumRadius = 5;
+            const maxSampleCount = 30;
+            const cellSize = minimumRadius / Math.sqrt(2);
+            let trees: StaticActor[] = [];
+            let samples: Vector2[] = [];
+            const xSize: number = 20;
+            const zSize: number = 20;
+            const cols: number = Math.floor(zSize / cellSize);
+            const rows: number = Math.floor(xSize / cellSize);
+
+            const grid: Vector2[] | number[] = [];
+            const activePoints: Vector2[] = [];
+
+            for (let i = 0; i < cols * rows; i++) {
+                grid[i] = -1;
+            }
+
+            console.log("grid length: " + grid.length);
+
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 10 + Math.random() * 10;
+            let x = -10;
+            let z = -10;
+            console.log("rand x " + x + "rand z " + z);
+            const iPos: Vector2 | number = new Vector2(x, z);
+            const iRow = Math.floor(x / cellSize);
+            const iCol = Math.floor(z / cellSize);
+            const index = Math.abs(iRow + iCol * cols);
+
+            console.log("initial row " + iRow + "initial col " + iCol);
+            console.log("index " + index);
+
+            grid[index] = iPos;
+            activePoints.push(iPos);
+
+            const tree: Group = this.resourceModule.getAsset("sm_common_tree_01") as Group;
+            tree.receiveShadow = true;
+            tree.castShadow = true;
+
+
+            for (let i = 0; i < grid.length; i++)
+            {
+                if (grid[i] != -1)
+                {
+                    const clonedTree = tree.clone();
+                    clonedTree.scale.set(0.02, 0.02, 0.02);
+                    const treeColDesc = RAPIER.ColliderDesc.cylinder(2.5, 1);
+                    const treeCol = physics.World.createCollider(treeColDesc);
+                    const treeActor: StaticActor = new StaticActor(new BoxGeometry(1, 1, 1), new MeshStandardMaterial(), treeColDesc, treeCol, clonedTree);
+                    treeActor.Mesh!.receiveShadow = true;
+                    treeActor.addToScene(this.gameScene, false);
+                    physics.addActor(treeActor);
+                    const pos = grid[i] as Vector2;
+                    console.log("Grid Pos X: " + pos.x + "Grid Pos Z: " + pos.y);
+
+                    treeActor.Root!.position.x = pos.x;
+                    treeActor.Root!.position.z = pos.y;
+                    treeActor.updatePositionAndRotation();
+                }
+            }
+        }
     }
 
     public update(dt: number): void

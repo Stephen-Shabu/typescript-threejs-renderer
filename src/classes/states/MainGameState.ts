@@ -1,5 +1,5 @@
-import { GameState } from "../GameState";
-import Singleton from "../Singleton";
+import { GameState } from "../../core/GameState";
+import Singleton from "../../core/Singleton";
 import { Vector3 } from 'three/src/math/Vector3.js';
 import { HemisphereLight } from "three/src/lights/HemisphereLight";
 import { PlaneGeometry } from "three/src/geometries/PlaneGeometry";
@@ -11,11 +11,11 @@ import { CapsuleGeometry } from "three";
 import { LineSegments } from "three";
 import { BufferGeometry } from "three";
 import { LineBasicMaterial } from "three";
-import RAPIER from '../PhysicsWorld';
+import RAPIER from '../../core/PhysicsWorld';
 import { BufferAttribute } from 'three';
-import { StaticActor } from "../StaticActor";
-import { DynamicActor } from "../DynamicActor";
-import { PlayerActor } from "../PlayerActor";
+import { StaticActor } from "../actors/StaticActor";
+import { DynamicActor } from "../actors/DynamicActor";
+import { PlayerActor } from "../actors/PlayerActor";
 
 export class MainGameState extends GameState
 {

@@ -1,9 +1,9 @@
-import { GameState } from "../GameState";
+import { GameState } from "../../core/GameState";
 import { MainGameState } from "./MainGameState";
 import { BoxGeometry } from "three/src/geometries/BoxGeometry";
 import { MeshStandardMaterial } from "three/src/materials/MeshStandardMaterial";
 import { Mesh } from "three/src/objects/Mesh";
-import Singleton from "../Singleton";
+import Singleton from "../../core/Singleton";
 
 export class IntroState extends GameState
 {

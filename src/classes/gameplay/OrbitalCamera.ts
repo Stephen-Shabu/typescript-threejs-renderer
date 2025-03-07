@@ -1,6 +1,6 @@
 import { PerspectiveCamera } from "three/src/cameras/PerspectiveCamera";
 import { Vector3 } from "three/src/math/Vector3.js";
-import { MathUtilsExtended } from "./MathUtilsExtended";
+import { MathUtilsExtended } from "../utility/MathUtilsExtended";
 
 export class OrbitalCamera
 {

@@ -1,8 +1,8 @@
-import { Actor } from "./core/Actor";
+import { Actor } from "../../core/Actor";
 import { BufferGeometry } from 'three';
 import { Material } from 'three';
-import Singleton from "./Singleton";
-import RAPIER from "./PhysicsWorld";
+import Singleton from "../../core/Singleton";
+import RAPIER from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 
 export class DynamicActor extends Actor

@@ -1,11 +1,11 @@
-import { Actor } from "./core/Actor";
+import { Actor } from "../../core/Actor";
 import {Quaternion } from 'three';
-import Singleton from "./Singleton";
-import RAPIER from "./PhysicsWorld";
+import Singleton from "../../core/Singleton";
+import RAPIER from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Group } from 'three';
 import { Vector3 } from "three/src/math/Vector3.js";
-import { MathUtilsExtended } from "./MathUtilsExtended";
+import { MathUtilsExtended } from "../utility/MathUtilsExtended";
 import { BoxGeometry } from "three";
 import { MeshStandardMaterial } from "three";
 import { Mesh } from "three/src/objects/Mesh";
@@ -13,7 +13,7 @@ import { AnimationMixer } from "three/src/animation/AnimationMixer";
 import { AnimationClip } from "three/src/animation/AnimationClip";
 import { AnimationAction } from "three/src/animation/AnimationAction";
 import { Object3D } from 'three';
-import { Resources } from "./core/Resources";
+import { Resources } from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 
 export class PlayerActor extends Actor

@@ -1,9 +1,9 @@
 import { Scene } from "three/src/scenes/Scene";
 import { GridHelper } from "three/src/helpers/GridHelper";
 import { AxesHelper } from "three/src/helpers/AxesHelper";
-import { OrbitalCamera } from './OrbitalCamera';
+import { OrbitalCamera } from '../classes/gameplay/OrbitalCamera';
 import { Renderer } from "./Renderer";
-import { Resources } from "./core/Resources";
+import { Resources } from "./Resources";
 
 export class GameState
 {

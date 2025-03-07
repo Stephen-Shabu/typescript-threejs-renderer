@@ -1,9 +1,9 @@
-import { Renderer } from "./Renderer";
-import { InputHandler } from './InputHandler';
-import { GameState } from './GameState';
-import { SplashState } from './gameStates/SplashState';
-import { MainGameState } from './gameStates/MainGameState';
-import Singleton from './Singleton';
+import { Renderer } from "./core/Renderer";
+import { InputHandler } from './core/InputHandler';
+import { GameState } from './core/GameState';
+import { SplashState } from './classes/states/SplashState';
+import { MainGameState } from './classes/states/MainGameState';
+import Singleton from './core/Singleton';
 import { Resources } from "./core/Resources"
 export class App
 {
@@ -35,11 +35,6 @@ export class App
         this.renderBackend.drawScene(updateGameState);
     }
 
-    public loadContent(): void
-    {
-
-    }
-
     public update(deltaTime: number): void
     {
         const singleton = Singleton.get();
@@ -52,7 +47,7 @@ export class App
 window.onload = () =>
 {
     const game = new App();
-    game.initialize();
-
     console.log("new game instance created");
+
+    game.initialize();
 };

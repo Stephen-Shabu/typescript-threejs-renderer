@@ -1,8 +1,8 @@
 import RAPIER from '@dimforge/rapier3d-compat';
-import { DynamicActor } from './DynamicActor';
-import { StaticActor } from './StaticActor';
-import { Actor } from './core/Actor';
-import { PlayerActor } from './PlayerActor';
+import { DynamicActor } from '../classes/actors/DynamicActor';
+import { StaticActor } from '../classes/actors/StaticActor';
+import { Actor } from './Actor';
+import { PlayerActor } from '../classes/actors/PlayerActor';
 
 export default RAPIER;
 

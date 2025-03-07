@@ -1,10 +1,10 @@
-import { GameState } from "../GameState";
+import { GameState } from "../../core/GameState";
 import { IntroState } from "./IntroState";
 import { BoxGeometry } from "three/src/geometries/BoxGeometry";
 import { MeshStandardMaterial } from "three/src/materials/MeshStandardMaterial";
 import { Mesh } from "three/src/objects/Mesh";
 import { DirectionalLight } from "three/src/lights/DirectionalLight";
-import Singleton from "../Singleton";
+import Singleton from "../../core/Singleton";
 
 
 export class SplashState extends GameState

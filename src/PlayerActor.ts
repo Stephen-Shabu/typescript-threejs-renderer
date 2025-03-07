@@ -1,4 +1,5 @@
 import { Actor } from "./core/Actor";
+import {Quaternion } from 'three';
 import Singleton from "./Singleton";
 import RAPIER from "./PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";

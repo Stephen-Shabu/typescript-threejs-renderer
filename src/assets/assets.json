@@ -1,0 +1,78 @@
+{
+  "bundles": [
+    {
+      "name": "splash-screen",
+      "assets": [
+        {
+          "alias": "splash_16_9",
+          "type": "texture",
+          "src": "./src/assets/splash/splash_16_9.png"
+        }
+      ]
+    },
+    {
+      "name": "character-models",
+      "assets": [
+        {
+          "alias": "sm_lone_knight",
+          "type": "fbx",
+          "src": "./src/assets/models/characters/sm_lone_knight.fbx"
+        },
+        {
+          "alias": "sm_lone_spartan",
+          "type": "fbx",
+          "src": "./src/assets/models/characters/sm_lone_spartan.fbx"
+        },
+        {
+          "alias": "sm_sand_surfer",
+          "type": "fbx",
+          "src": "./src/assets/models/characters/sm_lowpoly_sand_surfer.fbx"
+        }
+      ]
+    },
+    {
+      "name": "environment-models",
+      "assets": [
+        {
+          "alias": "sm_common_tree_01",
+          "type": "fbx",
+          "src": "./src/assets/models/enivronment/sm_common_tree_1.fbx"
+        },
+        {
+          "alias": "sm_courthouse_01",
+          "type": "gltf",
+          "src": "./src/assets/models/enivronment/sm_courthouse.glb"
+        },
+        {
+          "alias": "sm_rock_moss_07",
+          "type": "fbx",
+          "src": "./src/assets/models/enivronment/sm_rock_moss_7.fbx"
+        },
+        {
+          "alias": "sm_tree_01",
+          "type": "fbx",
+          "src": "./src/assets/models/enivronment/sm_tree_1.fbx"
+        }
+      ]
+    },
+    {
+      "name": "fonts",
+      "assets": []
+    },
+    {
+      "name": "utility-textures",
+      "assets": [
+        {
+          "alias": "t_colormap_01_d",
+          "type": "texture",
+          "src": "./src/assets/textures/utility/colormap.png"
+        },
+        {
+          "alias": "t_alpha_01_d",
+          "type": "texture",
+          "src": "./src/assets/textures/utility/alpha.jpg"
+        }
+      ]
+    }
+  ]
+}

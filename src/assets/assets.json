@@ -6,7 +6,7 @@
         {
           "alias": "splash_16_9",
           "type": "texture",
-          "src": "./src/assets/splash/splash_16_9.png"
+          "src": "./assets/splash/splash_16_9.png"
         }
       ]
     },
@@ -16,17 +16,22 @@
         {
           "alias": "sm_lone_knight",
           "type": "fbx",
-          "src": "./src/assets/models/characters/sm_lone_knight.fbx"
+          "src": "./assets/models/characters/sm_lone_knight.fbx"
         },
         {
           "alias": "sm_lone_spartan",
           "type": "fbx",
-          "src": "./src/assets/models/characters/sm_lone_spartan.fbx"
+          "src": "./assets/models/characters/sm_lone_spartan.fbx"
         },
         {
           "alias": "sm_sand_surfer",
           "type": "fbx",
-          "src": "./src/assets/models/characters/sm_lowpoly_sand_surfer.fbx"
+          "src": "./assets/models/characters/sm_lowpoly_sand_surfer.fbx"
+        },
+        {
+          "alias": "sm_lone_spartan_02",
+          "type": "gltf",
+          "src": "./assets/models/characters/sm_lone_spartan_02.glb"
         }
       ]
     },
@@ -36,22 +41,22 @@
         {
           "alias": "sm_common_tree_01",
           "type": "fbx",
-          "src": "./src/assets/models/enivronment/sm_common_tree_1.fbx"
+          "src": "./assets/models/enivronment/sm_common_tree_1.fbx"
         },
         {
           "alias": "sm_courthouse_01",
           "type": "gltf",
-          "src": "./src/assets/models/enivronment/sm_courthouse.glb"
+          "src": "./assets/models/enivronment/sm_courthouse.glb"
         },
         {
           "alias": "sm_rock_moss_07",
           "type": "fbx",
-          "src": "./src/assets/models/enivronment/sm_rock_moss_7.fbx"
+          "src": "./assets/models/enivronment/sm_rock_moss_7.fbx"
         },
         {
           "alias": "sm_tree_01",
           "type": "fbx",
-          "src": "./src/assets/models/enivronment/sm_tree_1.fbx"
+          "src": "./assets/models/enivronment/sm_tree_1.fbx"
         }
       ]
     },
@@ -65,12 +70,12 @@
         {
           "alias": "t_colormap_01_d",
           "type": "texture",
-          "src": "./src/assets/textures/utility/colormap.png"
+          "src": "./assets/textures/utility/colormap.png"
         },
         {
           "alias": "t_alpha_01_d",
           "type": "texture",
-          "src": "./src/assets/textures/utility/alpha.jpg"
+          "src": "./assets/textures/utility/alpha.jpg"
         }
       ]
     }

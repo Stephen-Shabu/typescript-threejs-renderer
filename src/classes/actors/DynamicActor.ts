@@ -50,6 +50,7 @@ export class DynamicActor extends Actor
         {
             this.actorRootObject?.position.copy(rbPosition);
             this.actorRootObject?.quaternion.copy(rbRotation);
+            this.actorCollider?.setRotation(rbRotation);
         }
     }
 }

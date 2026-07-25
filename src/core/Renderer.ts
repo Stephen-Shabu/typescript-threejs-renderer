@@ -2,6 +2,11 @@ import * as THREE from 'three';
 
 export class Renderer
 {
+    getCanvas(): HTMLCanvasElement
+    {
+        return this.webGlContext.domElement;
+    }
+
     private activeScene: THREE.Scene = new THREE.Scene();
     private activeCamera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
     private webGlContext: THREE.WebGLRenderer;
@@ -14,6 +19,10 @@ export class Renderer
         this.webGlContext.shadowMap.enabled = true;
         this.webGlContext.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.webGlContext.domElement);
+
+        this.webGlContext.domElement.addEventListener("click", () => {
+            this.webGlContext.domElement.requestPointerLock();
+        });
     }
 
     public updateScene(scene: THREE.Scene, camera: THREE.PerspectiveCamera): void

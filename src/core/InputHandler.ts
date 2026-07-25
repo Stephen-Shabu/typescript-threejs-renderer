@@ -20,6 +20,12 @@ export class InputHandler
     private keyMap: Map<number, string> = new Map();
     private mouseButtons: Map<string, KeyState> = new Map();
     private mouseButtonMap: Map<number, string> = new Map();
+    private mouseDeltaX: number = 0;
+    private mouseDeltaY: number = 0;
+    private currentClientX: number = 0;
+    private currentClientY: number = 0;
+    private deltaClientX: number = 0;
+    private deltaClientY: number = 0;
 
     constructor()
     {
@@ -41,6 +47,12 @@ export class InputHandler
         window.addEventListener('mouseup', (event: MouseEvent) =>
         {
             this.setMouseFromButtonIndex(event.button, false);
+        });
+
+        window.addEventListener('mousemove', (event: MouseEvent) =>
+        {
+            this.mouseDeltaX += event.movementX;
+            this.mouseDeltaY += event.movementY;
         });
 
 
@@ -74,6 +86,15 @@ export class InputHandler
                 value.justPressed = false;
             }
         });
+    }
+
+    consumeMouseInput(): number
+    {
+        const dx = this.mouseDeltaX;
+
+        this.mouseDeltaX = 0;
+
+        return dx;
     }
 
     private addKey(code: number, keyName: string): void

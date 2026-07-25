@@ -1,4 +1,5 @@
-import { Actor } from "../../core/Actor";
+import { Actor, ActorDesc } from "../../core/Actor";
+import { DynamicActor } from "./DynamicActor";
 import Singleton from "../../core/Singleton";
 import RAPIER from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
@@ -23,21 +24,8 @@ import PlayerActionStateMachine from "../states/player/action/PlayerActionStateM
 import { PlayerIdleActionState, PlayerLightAttackState, PlayerLightAttackFollowUpState } from "../states/player/action/PlayerActionStates";
 import { Animation, Animator } from "../gameplay/Animation";
 
-export class PlayerActor extends Actor
+export class PlayerActor extends DynamicActor
 {
-    get ColliderHandle(): number | undefined
-    {
-        return this.actorCollider?.handle;
-    }
-
-    private canAttack: boolean = false;
-    private canDodge: boolean = false;
-
-    protected actorCollider: RAPIER.Collider | undefined;
-    protected actorColliderDesc: RAPIER.ColliderDesc;
-    protected actorRigidbodyDesc: RAPIER.RigidBodyDesc;
-    protected actorRigidbody: RAPIER.RigidBody | undefined;
-
     private characterAnimationMixer: AnimationMixer | undefined;
     private characterAnimationClips: AnimationClip[] | undefined;
     private currentClip: AnimationClip = new AnimationClip();
@@ -49,17 +37,13 @@ export class PlayerActor extends Actor
     private movementComponent: Movement;
 	private animationComponent: Animation | undefined = undefined;
 
-    constructor(group: Group, colliderDesc: RAPIER.ColliderDesc, rbDesc: RAPIER.RigidBodyDesc, private camera: OrbitalCamera)
+	constructor(desc: ActorDesc, private camera: OrbitalCamera)
     {
-        super(undefined, undefined, group);
-
-        const physics = Singleton.get().PhysicsWorld;
-
-        this.actorColliderDesc = colliderDesc;
-        this.actorRigidbodyDesc = rbDesc;
-        this.actorRigidbody = physics.World?.createRigidBody(rbDesc);
-        this.actorCollider = physics.World?.createCollider(colliderDesc, this.actorRigidbody);
-
+		super(desc);
+		
+		//const physics = Singleton.get().PhysicsWorld;
+		//physics?.addActor(this);
+		
         this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
         this.playerContext = {
             Rigidbody: this.actorRigidbody,
@@ -106,18 +90,6 @@ export class PlayerActor extends Actor
 
         this.attachObject(clonedCharacter);
         clonedCharacter.position.y = -1;
-    }
-
-    public updatePositionAndRotation(): void
-    {
-        const rbPosition = this.actorRigidbody?.translation();
-        const rbRotation = this.actorRigidbody?.rotation();
-
-        if (rbPosition && rbRotation)
-        {
-            this.actorRootObject?.position.copy(rbPosition);
-            this.actorRootObject?.quaternion.copy(rbRotation);
-        }
     }
 
     public update(dt: number): void

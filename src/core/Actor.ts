@@ -4,6 +4,16 @@ import { BufferGeometry } from 'three';
 import { Material } from 'three';
 import { Object3D } from 'three';
 import { Scene } from "three/src/scenes/Scene";
+import RAPIER from "./PhysicsWorld";
+
+export type ActorDesc = 
+{
+	geometry: BufferGeometry;
+	material: Material;
+	group?: Group;
+	colliderDesc?: RAPIER.ColliderDesc;
+	rigidbodyDesc?: RAPIER.RigidBodyDesc;
+}
 
 export class Actor
 {
@@ -19,14 +29,14 @@ export class Actor
 
     protected actorMesh: Mesh | undefined;
     protected actorRootObject: Group | undefined;
-
-    constructor(geometry?: BufferGeometry, material?: Material, group?: Group)
+	
+	constructor(desc: ActorDesc)
     {
-        if (group)
+        if (desc.group)
         {
-            this.actorRootObject = group;
+            this.actorRootObject = desc.group;
 
-            group.traverse((object): void =>
+            desc.group.traverse((object): void =>
             {
                 if (object.type.startsWith('SkinnedMesh') || object.type.startsWith('Mesh'))
                 {
@@ -42,7 +52,7 @@ export class Actor
             return;
         }
 
-        this.actorMesh = new Mesh(geometry, material);
+        this.actorMesh = new Mesh(desc.geometry, desc.material);
         this.actorRootObject = new Group();
         this.actorRootObject.add(this.actorMesh);
     }
@@ -52,7 +62,7 @@ export class Actor
         this.actorRootObject?.add(object);
     }
 
-    public addToScene(gameScene: Scene): void
+    public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void
     {
         if (this.actorRootObject)
         {

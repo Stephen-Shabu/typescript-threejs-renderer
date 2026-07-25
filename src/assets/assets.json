@@ -19,17 +19,12 @@
           "src": "./assets/models/characters/sm_lone_knight.fbx"
         },
         {
-          "alias": "sm_lone_spartan",
-          "type": "fbx",
-          "src": "./assets/models/characters/sm_lone_spartan.fbx"
-        },
-        {
           "alias": "sm_sand_surfer",
           "type": "fbx",
           "src": "./assets/models/characters/sm_lowpoly_sand_surfer.fbx"
         },
         {
-          "alias": "sm_lone_spartan_02",
+          "alias": "sm_lone_spartan",
           "type": "gltf",
           "src": "./assets/models/characters/sm_lone_spartan_02.glb"
         }

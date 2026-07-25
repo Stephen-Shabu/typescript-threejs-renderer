@@ -1,13 +1,22 @@
 import RAPIER from '@dimforge/rapier3d-compat';
+import { PhysicsActor } from '../classes/actors/PhysicsActor';
 import { DynamicActor } from '../classes/actors/DynamicActor';
-import { StaticActor } from '../classes/actors/StaticActor';
 import { Actor } from './Actor';
 import { PlayerActor } from '../classes/actors/PlayerActor';
+import { LineSegments } from "three";
+import { BufferGeometry } from "three";
+import { LineBasicMaterial } from "three";
+import { BufferAttribute } from 'three';
 
 export default RAPIER;
 
 export class PhysicsWorld
 {
+	get DebugMesh(): LineSegments
+	{
+		return this.debugMesh;
+	}
+	
 	get World(): RAPIER.World | undefined
 	{
 		return this.world;
@@ -20,8 +29,9 @@ export class PhysicsWorld
 
 	private world: RAPIER.World | undefined;
 	private eventQueue: RAPIER.EventQueue | undefined;
-	private dynamicActors: Map<number, DynamicActor | PlayerActor> = new Map();
-	private staticActors: Map<number, StaticActor> = new Map();
+	private dynamicActors: Map<number, DynamicActor> = new Map();
+	private physicsActors: Map<number, PhysicsActor> = new Map();
+	private debugMesh: LineSegments = new LineSegments(new BufferGeometry(), new LineBasicMaterial({ color: 'lime' }));
 
 	constructor(){}
 
@@ -33,6 +43,9 @@ export class PhysicsWorld
 
 			this.world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
 			this.eventQueue = new RAPIER.EventQueue(true);
+			
+			this.debugMesh.frustumCulled = false;
+			this.debugMesh.visible = true;
 			console.log("rapier initialized: " + RAPIER.version());
 		}
 		catch(e)
@@ -46,30 +59,44 @@ export class PhysicsWorld
 		if (this.world && this.eventQueue)
 		{ 
 			this.world.step(this.eventQueue);
+			
+			this.eventQueue.drainCollisionEvents((handle1, handle2, started) => 
+			{    
+				if(!started) return;
+				
+				console.log(`col event: ${handle1} ${handle2} ${started}`);
+				const col1 = this.physicsActors.get(handle1);
+				const col2 = this.physicsActors.get(handle2);
+				
+				col1?.onCollisionStarted(col2!);
+				col2?.onCollisionStarted(col1!);
+			});
+
+			this.eventQueue.drainContactForceEvents(event =>
+			{
+				console.log(`force event: ${event.collider1()} ${event.collider2() }`);
+			});
+			
 			this.dynamicActors.forEach((actor: DynamicActor | PlayerActor): void => { actor.updatePositionAndRotation(); });
+			
+			const { vertices } = (this.world.debugRender());
+			this.debugMesh.geometry.setAttribute('position', new BufferAttribute(vertices, 3))
 		}
 	}
-
-	public addActor(actor: StaticActor | DynamicActor | PlayerActor): void
+	
+	public addActor(actor: PhysicsActor): void
 	{
 		var colliderHandle = actor.ColliderHandle;
 		console.log(`actor: ${colliderHandle} ${actor}`);
 		if (colliderHandle !== undefined)
 		{
-			if (actor instanceof (DynamicActor) || actor instanceof (PlayerActor))
+			this.physicsActors.set(colliderHandle, actor);
+			if (actor instanceof (DynamicActor))
 			{
 				if (!this.dynamicActors.has(colliderHandle))
 				{
 					console.log(`added dynamic actor: ${colliderHandle} ${actor}`);
 					this.dynamicActors.set(colliderHandle, actor);
-				}
-			}
-			else
-			{
-				if (!this.staticActors.has(colliderHandle))
-				{
-					console.log(`added static actor: ${colliderHandle} ${actor}`);
-					this.staticActors.set(colliderHandle, actor);
 				}
 			}
 		}

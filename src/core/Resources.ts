@@ -19,7 +19,7 @@ export class Resources
 	{
 		try
 		{
-			const response = await fetch("./src/assets/assets.json")
+			const response = await fetch("./assets/assets.json")
 			const data = await response.json();
 
 			this.bundleList = Object.fromEntries(data.bundles.map((bundle: any) => [bundle.name, bundle]));

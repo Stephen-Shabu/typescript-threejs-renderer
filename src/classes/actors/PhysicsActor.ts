@@ -1,8 +1,9 @@
-import { Actor, ActorDesc } from "../../core/Actor";
+import { Actor, ActorDesc, ColliderData } from "../../core/Actor";
 import { BufferGeometry } from 'three';
 import { Material } from 'three';
 import Singleton from "../../core/Singleton";
 import RAPIER from "../../core/PhysicsWorld";
+import { ColliderType, HitInfo } from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Group } from 'three';
 
@@ -18,8 +19,14 @@ export class PhysicsActor extends Actor
         return this.actorCollider;
     }
 	
+	get ColliderData(): ColliderData
+    {
+        return this.colliderData;
+    }
+	
 	protected actorCollider: RAPIER.Collider;
     protected actorColliderDesc: RAPIER.ColliderDesc;
+	protected colliderData: ColliderData;
 	
 	constructor(desc: ActorDesc)
     {
@@ -29,6 +36,7 @@ export class PhysicsActor extends Actor
 		
         this.actorColliderDesc = desc.colliderDesc!;	
 		this.actorCollider = physics.World?.createCollider(this.actorColliderDesc)!;
+		this.colliderData = desc.colliderData!; 
     }
 	
 	public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void

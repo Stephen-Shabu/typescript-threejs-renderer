@@ -27,6 +27,11 @@
           "alias": "sm_lone_spartan",
           "type": "gltf",
           "src": "./assets/models/characters/sm_lone_spartan_02.glb"
+        },
+		{
+          "alias": "sm_barabian_base_unit_01",
+          "type": "gltf",
+          "src": "./assets/models/characters/sm_barbarian_base_01.glb"
         }
       ]
     },

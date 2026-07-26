@@ -22,6 +22,19 @@ export enum CollisionGroup
     SENSOR  = 1 << 7
 }
 
+export enum ColliderType
+{
+	BODY   = 1 << 0,
+    HITBOX  = 1 << 1,
+    HURTBOX   = 1 << 2,
+}
+
+export type HitInfo = 
+{
+	hitPoint: {x:number, y:number, z:number};
+	hitNormal: {x:number, y:number, z:number};
+}
+
 export class PhysicsWorld
 {
 	get DebugMesh(): LineSegments
@@ -81,8 +94,20 @@ export class PhysicsWorld
 				const col1 = this.physicsActors.get(handle1);
 				const col2 = this.physicsActors.get(handle2);
 				
-				col1?.onCollisionStarted(col2!);
-				col2?.onCollisionStarted(col1!);
+			
+				if(col1?.ColliderData.colliderType === ColliderType.HITBOX && col2?.ColliderData.colliderType === ColliderType.HURTBOX)
+				{
+					col2?.onCollisionStarted(col1!);
+				}
+				else if(col2?.ColliderData.colliderType === ColliderType.HITBOX && col1?.ColliderData.colliderType === ColliderType.HURTBOX)
+				{
+					col1?.onCollisionStarted(col2!);
+				}
+				else
+				{
+					col1?.onCollisionStarted(col2!);
+					col2?.onCollisionStarted(col1!);
+				}
 			});
 
 			this.eventQueue.drainContactForceEvents(event =>

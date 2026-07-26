@@ -84,6 +84,14 @@ export class PlayerLightAttackState implements ActionStateCapable
 			this.ctx.HitBox.Collider.setEnabled(true);
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
 			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
+			attackVector.normalize();
+			
+			const hitDirection = playerForward.clone().normalize();
+			this.ctx.HitBox.ColliderData.hitInfo = 
+			{ 
+				hitPoint: {x:0, y:0, z:0}, 
+				hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
+			};
         }
     }
 

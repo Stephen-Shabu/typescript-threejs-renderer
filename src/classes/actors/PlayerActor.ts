@@ -2,7 +2,7 @@ import { Actor, ActorDesc } from "../../core/Actor";
 import { DynamicActor } from "./DynamicActor";
 import Singleton from "../../core/Singleton";
 import RAPIER from "../../core/PhysicsWorld";
-import { CollisionGroup } from "../../core/PhysicsWorld";
+import { CollisionGroup, ColliderType} from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Group } from 'three';
 import { AnimationActionLoopStyles, LoopRepeat } from 'three';
@@ -45,14 +45,13 @@ export class PlayerActor extends DynamicActor
 			.setSensor(true)
 			.setCollisionGroups((CollisionGroup.PLAYER_HITBOX << 16 ) | CollisionGroup.ENEMY_HURTBOX),
 		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
-		group: new Group()
+		group: new Group(),
+		colliderData: {colliderType: ColliderType.HITBOX}
 	}
 	);
 
 	constructor(desc: ActorDesc, private camera: OrbitalCamera)
-    {
-		desc.colliderDesc!.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD);
-		
+    {	
 		super(desc);
 		
         this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);

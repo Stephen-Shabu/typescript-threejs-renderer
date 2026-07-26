@@ -1,5 +1,5 @@
 import { GameState } from "../../core/GameState";
-import { ActorDesc } from "../../core/Actor";
+import { ActorDesc, ColliderData } from "../../core/Actor";
 import Singleton from "../../core/Singleton";
 import { Vector3 } from 'three/src/math/Vector3.js';
 import { HemisphereLight } from "three/src/lights/HemisphereLight";
@@ -17,7 +17,8 @@ import { BufferAttribute } from 'three';
 import { PhysicsActor } from "../actors/PhysicsActor";
 import { DynamicActor } from "../actors/DynamicActor";
 import { PlayerActor } from "../actors/PlayerActor";
-import { CollisionGroup } from "../../core/PhysicsWorld";
+import { MobActor } from "../actors/MobActor";
+import { CollisionGroup, ColliderType } from "../../core/PhysicsWorld";
 
 export class MainGameState extends GameState
 {
@@ -29,7 +30,16 @@ export class MainGameState extends GameState
 		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 5, 0),
 		group: new Group(),
 	}, this.gameCamera);
-
+	
+	private barbarian: MobActor = new MobActor(
+	{
+		geometry: new BoxGeometry(1, 1, 1),
+		material: new MeshStandardMaterial(),
+		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5),
+		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(5, 5, 5),
+		group: new Group(),
+	});
+	
     public initialise(): void
     {
         super.initialise();
@@ -40,6 +50,9 @@ export class MainGameState extends GameState
         {
             this.player.addToScene(this.gameScene);
             this.player.setupCharacterMesh(this.resourceModule, "sm_lone_spartan");
+			
+			this.barbarian.addToScene(this.gameScene);
+			this.barbarian.setupCharacterMesh(this.resourceModule, "sm_barabian_base_unit_01");
 
             if (physics.World)
             {
@@ -96,7 +109,8 @@ export class MainGameState extends GameState
 			geometry: new BoxGeometry(1, 1, 1),
 			material: new MeshStandardMaterial(),
 			colliderDesc: cubeColliderDesc,
-			rigidbodyDesc: cubeRbDesc
+			rigidbodyDesc: cubeRbDesc,
+			colliderData: {colliderType: ColliderType.HURTBOX }
 		};
 		
 		const cube: DynamicActor = new DynamicActor(cubeDesc);

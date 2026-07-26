@@ -6,9 +6,12 @@ import Singleton from "../../core/Singleton";
 import RAPIER from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Vector3 } from "three/src/math/Vector3.js";
+import { HitInfo } from "../../core/PhysicsWorld";
 
 export class DynamicActor extends PhysicsActor
 {
+	public onActorHit = (hitData:HitInfo) => {};
+	
 	get RigidBody()
 	{
 		return this.actorRigidbody!;
@@ -44,4 +47,15 @@ export class DynamicActor extends PhysicsActor
             this.actorCollider?.setRotation(rbRotation);
         }
     }
+	
+	public onCollisionStarted(otherActor: PhysicsActor): void
+	{
+		super.onCollisionStarted(otherActor);
+		
+		if(otherActor.ColliderData.hitInfo)
+		{
+			if(this.onActorHit)
+				this.onActorHit(otherActor.ColliderData.hitInfo);
+		}
+	}
 }

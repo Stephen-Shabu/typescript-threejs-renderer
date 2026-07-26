@@ -5,6 +5,13 @@ import { Material } from 'three';
 import { Object3D } from 'three';
 import { Scene } from "three/src/scenes/Scene";
 import RAPIER from "./PhysicsWorld";
+import { ColliderType, HitInfo } from "./PhysicsWorld";
+
+export type ColliderData = 
+{
+	colliderType : ColliderType;
+	hitInfo?: HitInfo;
+}
 
 export type ActorDesc = 
 {
@@ -13,6 +20,7 @@ export type ActorDesc =
 	group?: Group;
 	colliderDesc?: RAPIER.ColliderDesc;
 	rigidbodyDesc?: RAPIER.RigidBodyDesc;
+	colliderData?: ColliderData;
 }
 
 export class Actor

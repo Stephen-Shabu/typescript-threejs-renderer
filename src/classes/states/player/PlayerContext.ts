@@ -8,9 +8,6 @@ import { DynamicActor } from "../../actors/DynamicActor";
 
 export class PlayerContext
 {
-    //get Heading(): Vector3 { return this.heading; }
-    //set Heading(value: Vector3){ this.heading = value; }
-
     public Rigidbody: RAPIER.RigidBody | undefined;
     public Movement: Movement;
     public InputVector: Vector3;

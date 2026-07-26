@@ -17,6 +17,7 @@ import { BufferAttribute } from 'three';
 import { PhysicsActor } from "../actors/PhysicsActor";
 import { DynamicActor } from "../actors/DynamicActor";
 import { PlayerActor } from "../actors/PlayerActor";
+import { CollisionGroup } from "../../core/PhysicsWorld";
 
 export class MainGameState extends GameState
 {
@@ -80,13 +81,14 @@ export class MainGameState extends GameState
 		capsule.addToScene(this.gameScene);
 		
         const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5)
+			.setCollisionGroups((CollisionGroup.ENEMY_HURTBOX << 16 ) | CollisionGroup.PLAYER_HITBOX)
 			.setMass(1)
 			.setRestitution(0.1)
 			.setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL)
 			.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
 
-        const cubeRbDesc = RAPIER.RigidBodyDesc.fixed()
-			.setTranslation(0, 1, 0)
+        const cubeRbDesc = RAPIER.RigidBodyDesc.dynamic()
+			.setTranslation(0, 1, 5)
 			.setCanSleep(false);
 
 		const cubeDesc: ActorDesc = 

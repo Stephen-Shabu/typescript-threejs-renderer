@@ -62,6 +62,6 @@ export class PhysicsActor extends Actor
 	
 	public onCollisionStarted(otherActor: PhysicsActor): void
 	{
-		console.log("collided with:", otherActor);
+		console.log(this, "collided with:", otherActor);
 	}
 }

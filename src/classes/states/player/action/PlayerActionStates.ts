@@ -23,10 +23,18 @@ export class PlayerIdleActionState implements ActionStateCapable
     enter(): void
     {
         console.log("Entered idle action");
+		this.ctx.HitBox.Collider.setEnabled(false);
     }
 
     update(dt: number): void
     {
+		const playerPosition = this.ctx.Rigidbody?.translation();
+		
+		if (playerPosition != undefined) 
+		{
+			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
+        }
+		
         const input = Singleton.get().Input;
         let actionPressed: number = (input.MouseButtons.get('leftMouse')?.isDown ? 1 : 0);
 
@@ -36,10 +44,7 @@ export class PlayerIdleActionState implements ActionStateCapable
         }
     }
 
-    exit(): void
-    {
-
-    }
+    exit(): void {}
 
     canTransitionTo(ctor: Ctor): boolean
     {
@@ -54,39 +59,31 @@ export class PlayerLightAttackState implements ActionStateCapable
     canBeInterupted: boolean = false;
     private timer: number = 0;
     private queuedNext: boolean = false;
-    private hitBox: RAPIER.Collider | undefined;
-
     private readonly DURATION = 0.6;
     private readonly COMBO_WINDOW_START = 0.3;
     private readonly COMBO_WINDO_END = 0.6;
 
-    constructor(private actionFSM: PlayerActionStateMachine, private ctx: PlayerContext)
-    {
-        const physics = Singleton.get().PhysicsWorld;
-        const hitBoxDesc = RAPIER.ColliderDesc.cuboid(0.2, 0.1, 0.2);
-
-        this.hitBox = physics.World?.createCollider(hitBoxDesc);
-    }
+    constructor(private actionFSM: PlayerActionStateMachine, private ctx: PlayerContext){}
 
     enter(): void
     {
+		console.log("performed light attack");
+		
         this.timer = 0;
         this.queuedNext = false;
-        console.log("performed light attack");
-        //this.hitBox?.setEnabled(true);
-        this.hitBox?.setEnabled(false);
+		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 		
 		this.ctx?.Animation?.setAnimationOneShot(this.updateAnimation.bind(this));
 		if(this.ctx.Animation !== undefined)
 			this.ctx.Animation.applyOneShotAnimation();
-
+		
         if (playerPosition != undefined)
         {
+			this.ctx.HitBox.Collider.setEnabled(true);
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-
-            this.hitBox?.setTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
+			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
         }
     }
 
@@ -95,12 +92,14 @@ export class PlayerLightAttackState implements ActionStateCapable
         this.timer += dt;
         const input = Singleton.get().Input;
         let actionPressed: number = (input.MouseButtons.get('leftMouse')?.isDown ? 1 : 0);
+		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
-        if (playerPosition != undefined) {
+		
+        if (playerPosition != undefined) 
+		{
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-
-            this.hitBox?.setTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
+			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
         }
 
         if (this.timer >= this.COMBO_WINDOW_START &&
@@ -125,11 +124,10 @@ export class PlayerLightAttackState implements ActionStateCapable
 
     exit(): void
     {
-        this.hitBox?.setEnabled(false);
-
+		this.ctx.HitBox.Collider.setEnabled(false);
+		
         const playerPosition = this.ctx.Rigidbody!.translation();
-
-        this.hitBox?.setTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
+		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
 	
     canTransitionTo(ctor: Ctor): boolean
@@ -170,27 +168,18 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
     canBeInterupted: boolean = false;
     private timer: number = 0;
     private queuedNext: boolean = false;
-    private hitBox: RAPIER.Collider | undefined;
-
     private readonly DURATION = 0.6;
     private readonly COMBO_WINDOW_START = 0.3;
     private readonly COMBO_WINDO_END = 0.6;
 
-    constructor(private actionFSM: PlayerActionStateMachine, private ctx: PlayerContext)
-    {
-        const physics = Singleton.get().PhysicsWorld;
-        const hitBoxDesc = RAPIER.ColliderDesc.cuboid(0.2, 0.1, 0.2);
-
-        this.hitBox = physics.World?.createCollider(hitBoxDesc);
-    }
+    constructor(private actionFSM: PlayerActionStateMachine, private ctx: PlayerContext){}
 
     enter(): void
     {
+		console.log("performed light attack follow");
         this.timer = 0;
         this.queuedNext = false;
-        console.log("performed light attack follow");
-        //this.hitBox?.setEnabled(true);
-        this.hitBox?.setEnabled(false);
+		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 		
@@ -200,23 +189,26 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 
         if (playerPosition != undefined)
         {
+			this.ctx.HitBox.Collider.setEnabled(true);
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-
-            this.hitBox?.setTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
+			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
         }
     }
 
     update(dt: number): void
     {
         this.timer += dt;
+		
         const input = Singleton.get().Input;
         let actionPressed: number = (input.MouseButtons.get('leftMouse')?.isDown ? 1 : 0);
+		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
-        if (playerPosition != undefined) {
+		
+        if (playerPosition != undefined) 
+		{
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-
-            this.hitBox?.setTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
+			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
         }
 
         if (this.timer >= this.COMBO_WINDOW_START &&
@@ -240,11 +232,10 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 
     exit(): void
     {
-        this.hitBox?.setEnabled(false);
-
+		this.ctx.HitBox.Collider.setEnabled(false);
+		
         const playerPosition = this.ctx.Rigidbody!.translation();
-
-        this.hitBox?.setTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
+		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
 
     canTransitionTo(ctor: Ctor): boolean

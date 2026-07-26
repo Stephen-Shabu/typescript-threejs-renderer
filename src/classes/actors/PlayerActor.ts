@@ -2,6 +2,7 @@ import { Actor, ActorDesc } from "../../core/Actor";
 import { DynamicActor } from "./DynamicActor";
 import Singleton from "../../core/Singleton";
 import RAPIER from "../../core/PhysicsWorld";
+import { CollisionGroup } from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Group } from 'three';
 import { AnimationActionLoopStyles, LoopRepeat } from 'three';
@@ -36,13 +37,23 @@ export class PlayerActor extends DynamicActor
     private playerContext: PlayerContext;
     private movementComponent: Movement;
 	private animationComponent: Animation | undefined = undefined;
+	private hitboxActor: DynamicActor = new DynamicActor(
+	{
+		geometry: new BoxGeometry(1, 1, 1),
+		material: new MeshStandardMaterial(),
+		colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
+			.setSensor(true)
+			.setCollisionGroups((CollisionGroup.PLAYER_HITBOX << 16 ) | CollisionGroup.ENEMY_HURTBOX),
+		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
+		group: new Group()
+	}
+	);
 
 	constructor(desc: ActorDesc, private camera: OrbitalCamera)
     {
-		super(desc);
+		desc.colliderDesc!.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD);
 		
-		//const physics = Singleton.get().PhysicsWorld;
-		//physics?.addActor(this);
+		super(desc);
 		
         this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
         this.playerContext = {
@@ -52,7 +63,8 @@ export class PlayerActor extends DynamicActor
             InputVector: new Vector3(0, 0, 0),
             Heading: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
-			Animation: this.animationComponent
+			Animation: this.animationComponent,
+			HitBox: this.hitboxActor
         };
 
         this.moveStateMachine.addState(PlayerMoveState, new PlayerMoveState(this.moveStateMachine, this.playerContext));
@@ -67,6 +79,9 @@ export class PlayerActor extends DynamicActor
     public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void
     {
         super.addToScene(gameScene);
+		
+		const physics = Singleton.get().PhysicsWorld;
+		physics?.addActor(this.hitboxActor);
 
         const head = new Mesh(new BoxGeometry(0.2, 0.2, 0.2), new MeshStandardMaterial());
         this.attachObject(head);

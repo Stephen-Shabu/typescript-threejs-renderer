@@ -10,6 +10,18 @@ import { BufferAttribute } from 'three';
 
 export default RAPIER;
 
+export enum CollisionGroup
+{
+	WORLD   = 1 << 0,
+    PLAYER  = 1 << 1,
+    ENEMY   = 1 << 2,
+    PLAYER_HITBOX = 1 << 3,
+    ENEMY_HITBOX  = 1 << 4,
+	PLAYER_HURTBOX = 1 << 5,
+	ENEMY_HURTBOX = 1 << 6,
+    SENSOR  = 1 << 7
+}
+
 export class PhysicsWorld
 {
 	get DebugMesh(): LineSegments
@@ -65,6 +77,7 @@ export class PhysicsWorld
 				if(!started) return;
 				
 				console.log(`col event: ${handle1} ${handle2} ${started}`);
+				
 				const col1 = this.physicsActors.get(handle1);
 				const col2 = this.physicsActors.get(handle2);
 				

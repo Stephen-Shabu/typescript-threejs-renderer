@@ -5,9 +5,15 @@ import { Material } from 'three';
 import Singleton from "../../core/Singleton";
 import RAPIER from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
+import { Vector3 } from "three/src/math/Vector3.js";
 
 export class DynamicActor extends PhysicsActor
 {
+	get RigidBody()
+	{
+		return this.actorRigidbody!;
+	}
+	
     protected actorRigidbodyDesc: RAPIER.RigidBodyDesc | undefined;
     protected actorRigidbody: RAPIER.RigidBody | undefined;
 
@@ -20,6 +26,7 @@ export class DynamicActor extends PhysicsActor
 		this.actorRigidbodyDesc = desc.rigidbodyDesc;
         this.actorRigidbody = physics.World?.createRigidBody(desc.rigidbodyDesc!);
 		
+		// Remove collider created by base call
 		physics.World?.removeCollider(this.actorCollider, true);
 		
         this.actorCollider = physics.World?.createCollider(desc.colliderDesc!, this.actorRigidbody)!;

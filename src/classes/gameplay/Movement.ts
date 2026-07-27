@@ -6,13 +6,16 @@ import { Quaternion } from 'three';
 
 export class Movement
 {
-    private topSpeed: number = 5;
-    private accelerationSpeed: number = 10;
-    private deAccelerationSpeed: number = 20;
+	private topSpeed: number = 10;
+    private accelerationSpeed: number = 100;
+    private deAccelerationSpeed: number = 200;
     private currentSpeed: number = 0;
     private rotationSpeed: number = 12;
     private lastMoveVector: Vector3 = new Vector3();
     private currentMoveVector: Vector3 = new Vector3();
+	private canStop: boolean = false;
+	private impulseForce: Vector3 = new Vector3(0, 0, 0);
+	private identityVector: Vector3 = new Vector3(0, 0, 0);
 
     constructor(private actorRigidbody: RAPIER.RigidBody | undefined, private actorRootObject: Group | undefined) { }
 
@@ -30,9 +33,12 @@ export class Movement
 
         let speed = this.calculateSpeed(canAccelerate, dt);
         let moveVector = this.currentMoveVector.clone().multiplyScalar(speed);
-        moveVector.y = this.actorRigidbody!.linvel().y;
-
-        this.actorRigidbody?.setLinvel(moveVector, true);
+		
+		let vel = new Vector3(this.actorRigidbody!.linvel().x, this.actorRigidbody!.linvel().y, this.actorRigidbody!.linvel().z);
+		vel.lerp(moveVector, dt);
+		vel.y = this.actorRigidbody!.linvel().y;
+		
+        this.actorRigidbody?.setLinvel(this.canStop ? this.identityVector : vel, true);
     }
 
     public look(dt: number): void
@@ -51,6 +57,11 @@ export class Movement
         this.actorRigidbody?.setRotation(rot, true);
         this.actorRigidbody?.lockRotations(true, true);
     }
+	
+	public setStopMotion(canStop: boolean): void
+	{
+		this.canStop = canStop;
+	}
 
     private calculateSpeed(canAccelerate: boolean, dt: number): number
     {

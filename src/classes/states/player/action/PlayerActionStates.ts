@@ -9,12 +9,8 @@ import { Animator } from "../../../gameplay/Animation";
 import { AnimationClip } from "three/src/animation/AnimationClip";
 import { AnimationActionLoopStyles, LoopRepeat, LoopOnce } from 'three';
 
-const PlayerIdleActionStateKind = Symbol("PlayerIdleActionState");
-const PlayerLightAttackStateKind = Symbol("PlayerLightAttackState");
-
 export class PlayerIdleActionState implements ActionStateCapable
 {
-    kind = PlayerIdleActionStateKind;
     priority: number = 0;
     canBeInterupted: boolean = true;
 
@@ -22,7 +18,6 @@ export class PlayerIdleActionState implements ActionStateCapable
 
     enter(): void
     {
-        console.log("Entered idle action");
 		this.ctx.HitBox.Collider.setEnabled(false);
     }
 
@@ -54,7 +49,6 @@ export class PlayerIdleActionState implements ActionStateCapable
 
 export class PlayerLightAttackState implements ActionStateCapable
 {
-    kind = PlayerLightAttackStateKind;
     priority: number = 10;
     canBeInterupted: boolean = false;
     private timer: number = 0;
@@ -67,8 +61,6 @@ export class PlayerLightAttackState implements ActionStateCapable
 
     enter(): void
     {
-		console.log("performed light attack");
-		
         this.timer = 0;
         this.queuedNext = false;
 		
@@ -87,12 +79,15 @@ export class PlayerLightAttackState implements ActionStateCapable
 			attackVector.normalize();
 			
 			const hitDirection = playerForward.clone().normalize();
+			//this.ctx.Rigidbody?.setLinvel(hitDirection.clone().multiplyScalar(3), true);
 			this.ctx.HitBox.ColliderData.hitInfo = 
 			{ 
 				hitPoint: {x:0, y:0, z:0}, 
 				hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
 			};
         }
+		
+		this.ctx.Movement.setStopMotion(true);
     }
 
     update(dt: number): void
@@ -133,7 +128,7 @@ export class PlayerLightAttackState implements ActionStateCapable
     exit(): void
     {
 		this.ctx.HitBox.Collider.setEnabled(false);
-		
+		this.ctx.Movement.setStopMotion(false);
         const playerPosition = this.ctx.Rigidbody!.translation();
 		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
@@ -171,7 +166,6 @@ export class PlayerLightAttackState implements ActionStateCapable
 
 export class PlayerLightAttackFollowUpState implements ActionStateCapable
 {
-	kind = PlayerLightAttackStateKind;
     priority: number = 11;
     canBeInterupted: boolean = false;
     private timer: number = 0;
@@ -190,6 +184,15 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
+		
+		const hitDirection = playerForward.clone().normalize();
+		this.ctx.Rigidbody?.setLinvel(hitDirection.clone().multiplyScalar(3), true);
+		
+		this.ctx.HitBox.ColliderData.hitInfo = 
+		{ 
+			hitPoint: {x:0, y:0, z:0}, 
+			hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
+		};
 		
 		this.ctx?.Animation?.setAnimationOneShot(this.updateAnimation.bind(this));
 		if(this.ctx.Animation !== undefined)
@@ -227,14 +230,7 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 
         if (this.timer >= this.DURATION)
         {
-            if (this.queuedNext)
-            {
-                this.actionFSM.changeState(PlayerLightAttackState);
-            }
-            else
-            {
-                this.actionFSM.forceIdle();
-            }
+			this.actionFSM.forceIdle();
         }
     }
 
@@ -248,7 +244,7 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 
     canTransitionTo(ctor: Ctor): boolean
     {
-        return ctor === PlayerIdleActionState || ctor === PlayerLightAttackFollowUpState;
+        return ctor === PlayerIdleActionState || ctor === PlayerLightAttackState;
     }
 	
 	private updateAnimation(animator:Animator): void

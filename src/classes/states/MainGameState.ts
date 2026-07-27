@@ -3,6 +3,7 @@ import { ActorDesc, ColliderData } from "../../core/Actor";
 import Singleton from "../../core/Singleton";
 import { Vector3 } from 'three/src/math/Vector3.js';
 import { HemisphereLight } from "three/src/lights/HemisphereLight";
+import { DirectionalLight } from "three/src/lights/DirectionalLight";
 import { PlaneGeometry } from "three/src/geometries/PlaneGeometry";
 import { Group } from "three/src/objects/Group.js";
 import { MeshStandardMaterial, Vector2 } from "three";
@@ -19,6 +20,7 @@ import { DynamicActor } from "../actors/DynamicActor";
 import { PlayerActor } from "../actors/PlayerActor";
 import { MobActor } from "../actors/MobActor";
 import { CollisionGroup, ColliderType } from "../../core/PhysicsWorld";
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 export class MainGameState extends GameState
 {
@@ -26,18 +28,22 @@ export class MainGameState extends GameState
 	{
 		geometry: new BoxGeometry(1, 1, 1),
 		material: new MeshStandardMaterial(),
-		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5),
+		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
+		.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD | CollisionGroup.ENEMY),
 		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 5, 0),
 		group: new Group(),
+		colliderData: {colliderType: ColliderType.BODY }
 	}, this.gameCamera);
 	
 	private barbarian: MobActor = new MobActor(
 	{
 		geometry: new BoxGeometry(1, 1, 1),
 		material: new MeshStandardMaterial(),
-		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5),
+		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
+			.setCollisionGroups((CollisionGroup.ENEMY << 16 ) | CollisionGroup.WORLD | CollisionGroup.PLAYER),
 		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(5, 5, 5),
 		group: new Group(),
+		colliderData: {colliderType: ColliderType.BODY }
 	});
 	
     public initialise(): void
@@ -61,7 +67,7 @@ export class MainGameState extends GameState
                 floorAlphaTexture = this.resourceModule.getAsset("t_alpha_01_d");
 				
                 const groundMat = new MeshStandardMaterial({ color: 0xffffff, alphaMap: floorAlphaTexture, transparent: true });
-                groundMat.color.setHSL(0.095, 1, 0.75);
+                groundMat.color.setHSL(0.095, 1, 0.55);
 
                 const floorDesc: ActorDesc = 
 				{
@@ -100,21 +106,39 @@ export class MainGameState extends GameState
 			.setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL)
 			.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
 
-        const cubeRbDesc = RAPIER.RigidBodyDesc.dynamic()
-			.setTranslation(0, 1, 5)
-			.setCanSleep(false);
-
 		const cubeDesc: ActorDesc = 
 		{
 			geometry: new BoxGeometry(1, 1, 1),
 			material: new MeshStandardMaterial(),
 			colliderDesc: cubeColliderDesc,
-			rigidbodyDesc: cubeRbDesc,
+			rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic()
+				.setTranslation(0, 1, 5)
+				.setCanSleep(false),
 			colliderData: {colliderType: ColliderType.HURTBOX }
 		};
 		
 		const cube: DynamicActor = new DynamicActor(cubeDesc);
+		const hitCube: DynamicActor = new DynamicActor(
+		{
+			geometry: new BoxGeometry(1, 1, 1),
+			material: new MeshStandardMaterial(),
+			colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5)
+				.setSensor(true)
+				.setCollisionGroups((CollisionGroup.ENEMY_HITBOX << 16 ) | CollisionGroup.PLAYER_HURTBOX),
+			rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased()
+				.setTranslation(2, 1, 5),
+			colliderData: 
+			{ 
+				colliderType: ColliderType.HITBOX, 
+				hitInfo: 
+					{
+						hitPoint: {x:0, y:0, z:0}, 
+						hitNormal: {x:2, y:0, z:-1}
+					}  
+			}
+		});
         cube.addToScene(this.gameScene);
+		hitCube.addToScene(this.gameScene);
 		
         this.gameScene.add(physics.DebugMesh);
 
@@ -123,7 +147,9 @@ export class MainGameState extends GameState
         hemiLight.groundColor.setHSL(0.095, 1, 0.75);
         hemiLight.position.set(0, 50, 0);
         this.gameScene.add(hemiLight);
-
+		
+		const directionalLight = new DirectionalLight(0xffffff, 0.5);
+		this.gameScene.add(directionalLight);
         console.log("Main Game State initialised");
     }
 
@@ -212,7 +238,8 @@ export class MainGameState extends GameState
         let orbitDirection: number = deltaX * dt * 1.5;
         const characterPos = this.player.Root!.position.clone();
         this.player.update(dt);
-
+		this.barbarian.update(dt);
+		
         this.gameCamera.updateOrbit(characterPos, orbitDirection, 10, dt);
         this.gameCamera.View.lookAt(characterPos);
     }

@@ -17,12 +17,13 @@ import { Object3D } from 'three';
 import { Resources } from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import BaseStateMachine from "../../core/StateMachine/BaseStateMachine";
+import PlayerActionStateMachine from "../states/player/action/PlayerActionStateMachine";
 import { PlayerMoveState, PlayerIdleState } from "../../classes/states/player/movement/PlayerMovementStates";
+import { PlayerNormalState, PlayerHitReactState } from "../../classes/states/player/condition/PlayerConditionStates";
+import { PlayerIdleActionState, PlayerLightAttackState, PlayerLightAttackFollowUpState } from "../states/player/action/PlayerActionStates";
 import { PlayerContext } from "../states/player/PlayerContext";
 import { Movement } from "../gameplay/Movement";
 import { OrbitalCamera } from '../../classes/gameplay/OrbitalCamera';
-import PlayerActionStateMachine from "../states/player/action/PlayerActionStateMachine";
-import { PlayerIdleActionState, PlayerLightAttackState, PlayerLightAttackFollowUpState } from "../states/player/action/PlayerActionStates";
 import { Animation, Animator } from "../gameplay/Animation";
 
 export class PlayerActor extends DynamicActor
@@ -32,11 +33,13 @@ export class PlayerActor extends DynamicActor
     private currentClip: AnimationClip = new AnimationClip();
     private currentAction: AnimationAction | undefined;
     private moveStateMachine: BaseStateMachine = new BaseStateMachine();
+	private conditionStateMachine: BaseStateMachine = new BaseStateMachine();
     private actionStateMachine: PlayerActionStateMachine = new PlayerActionStateMachine();
 
     private playerContext: PlayerContext;
     private movementComponent: Movement;
 	private animationComponent: Animation | undefined = undefined;
+	
 	private hitboxActor: DynamicActor = new DynamicActor(
 	{
 		geometry: new BoxGeometry(1, 1, 1),
@@ -44,6 +47,21 @@ export class PlayerActor extends DynamicActor
 		colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
 			.setSensor(true)
 			.setCollisionGroups((CollisionGroup.PLAYER_HITBOX << 16 ) | CollisionGroup.ENEMY_HURTBOX),
+		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
+		group: new Group(),
+		colliderData: {colliderType: ColliderType.HITBOX}
+	}
+	);
+	
+	private hurtboxActor: DynamicActor = new DynamicActor(
+	{
+		geometry: new BoxGeometry(1, 1, 1),
+		material: new MeshStandardMaterial(),
+		colliderDesc: RAPIER.ColliderDesc.cuboid(0.3, 0.3, 0.3)
+			.setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL)
+			.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
+			.setSensor(true)
+			.setCollisionGroups((CollisionGroup.PLAYER_HURTBOX << 16 ) | CollisionGroup.ENEMY_HITBOX),
 		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
 		group: new Group(),
 		colliderData: {colliderType: ColliderType.HITBOX}
@@ -63,7 +81,8 @@ export class PlayerActor extends DynamicActor
             Heading: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
 			Animation: this.animationComponent,
-			HitBox: this.hitboxActor
+			HitBox: this.hitboxActor,
+			HurtBox: this.hurtboxActor
         };
 
         this.moveStateMachine.addState(PlayerMoveState, new PlayerMoveState(this.moveStateMachine, this.playerContext));
@@ -73,6 +92,10 @@ export class PlayerActor extends DynamicActor
         this.actionStateMachine.addState(new PlayerLightAttackState(this.actionStateMachine, this.playerContext));
 		this.actionStateMachine.addState(new PlayerLightAttackFollowUpState(this.actionStateMachine, this.playerContext));
         this.actionStateMachine.changeState(PlayerIdleActionState);
+		
+		this.conditionStateMachine.addState(PlayerNormalState, new PlayerNormalState(this.conditionStateMachine, this.playerContext));
+		this.conditionStateMachine.addState(PlayerHitReactState, new PlayerHitReactState(this.conditionStateMachine, this.playerContext));
+		this.conditionStateMachine.changeState(PlayerNormalState);
     }
 
     public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void
@@ -81,6 +104,7 @@ export class PlayerActor extends DynamicActor
 		
 		const physics = Singleton.get().PhysicsWorld;
 		physics?.addActor(this.hitboxActor);
+		physics?.addActor(this.hurtboxActor);
 
         const head = new Mesh(new BoxGeometry(0.2, 0.2, 0.2), new MeshStandardMaterial());
         this.attachObject(head);
@@ -110,5 +134,6 @@ export class PlayerActor extends DynamicActor
     {
         this.moveStateMachine.update(dt);
         this.actionStateMachine.update(dt);
+		this.conditionStateMachine.update(dt);
     }
 }

@@ -4,7 +4,6 @@ export type Ctor<T extends ActionStateCapable = ActionStateCapable> = new (...ar
 
 export interface ActionStateCapable extends StateCapable
 {
-    kind: symbol;
     priority: number;
     canBeInterupted: boolean;
     canTransitionTo(cls: Ctor): boolean;

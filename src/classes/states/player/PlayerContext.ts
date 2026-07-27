@@ -7,12 +7,13 @@ import { Group } from 'three';
 import { DynamicActor } from "../../actors/DynamicActor";
 
 export class PlayerContext
-{
+{	
     public Rigidbody: RAPIER.RigidBody | undefined;
     public Movement: Movement;
     public InputVector: Vector3;
     public Camera: OrbitalCamera;
     public Heading: Vector3 = new Vector3(0, 0, 0);
+	public HitDirection: Vector3 = new Vector3(0, 0, 0);
     public Transform: Group | undefined;
 	public Animation: Animation | undefined;
 	public HitBox: DynamicActor;
@@ -22,7 +23,8 @@ export class PlayerContext
 	move: Movement, 
 	inputVector: Vector3, 
 	camera: OrbitalCamera, 
-	heading: Vector3, 
+	heading: Vector3,
+	hitDirection: Vector3,
 	transform: Group | undefined, 
 	anim: Animation,
 	hitBox:DynamicActor,
@@ -37,5 +39,6 @@ export class PlayerContext
 		this.Animation = anim;
 		this.HitBox = hitBox;
 		this.HurtBox = hurtBox;
+		this.HitDirection = hitDirection;
     }
 }

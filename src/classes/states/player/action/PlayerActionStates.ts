@@ -67,9 +67,7 @@ export class PlayerLightAttackState implements ActionStateCapable
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 		
-		this.ctx?.Animation?.setAnimationOneShot(this.updateAnimation.bind(this));
-		if(this.ctx.Animation !== undefined)
-			this.ctx.Animation.applyOneShotAnimation();
+		this.ctx?.Animation?.setAnimationUpdateCallback(this.updateAnimation.bind(this));
 		
         if (playerPosition != undefined)
         {
@@ -79,7 +77,7 @@ export class PlayerLightAttackState implements ActionStateCapable
 			attackVector.normalize();
 			
 			const hitDirection = playerForward.clone().normalize();
-			//this.ctx.Rigidbody?.setLinvel(hitDirection.clone().multiplyScalar(3), true);
+			
 			this.ctx.HitBox.ColliderData.hitInfo = 
 			{ 
 				hitPoint: {x:0, y:0, z:0}, 
@@ -87,6 +85,7 @@ export class PlayerLightAttackState implements ActionStateCapable
 			};
         }
 		
+		this.ctx.Movement.setStopRotation(true);
 		this.ctx.Movement.setStopMotion(true);
     }
 
@@ -103,6 +102,7 @@ export class PlayerLightAttackState implements ActionStateCapable
 		{
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
 			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
+			this.ctx.HitBox.Collider.setEnabled(false);
         }
 
         if (this.timer >= this.COMBO_WINDOW_START &&
@@ -123,12 +123,17 @@ export class PlayerLightAttackState implements ActionStateCapable
                 this.actionFSM.forceIdle();
             }
         }
+		
+		if(this.ctx.Animation !== undefined)
+			this.ctx.Animation.applyAnimation(dt);
     }
 
     exit(): void
     {
 		this.ctx.HitBox.Collider.setEnabled(false);
 		this.ctx.Movement.setStopMotion(false);
+		this.ctx.Movement.setStopRotation(false);
+		
         const playerPosition = this.ctx.Rigidbody!.translation();
 		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
@@ -138,7 +143,7 @@ export class PlayerLightAttackState implements ActionStateCapable
         return ctor === PlayerIdleActionState || ctor === PlayerLightAttackFollowUpState;
     }
 	
-	private updateAnimation(animator:Animator): void
+	private updateAnimation(animator:Animator, dt:number): void
 	{
 		if(this.ctx.Animation !== undefined)
 		{
@@ -160,6 +165,8 @@ export class PlayerLightAttackState implements ActionStateCapable
 				.setLoop(LoopOnce, 0)
                 .play();
 			}
+			
+			animator.mixer.update(dt);
 		}
 	}
 }
@@ -194,9 +201,7 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 			hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
 		};
 		
-		this.ctx?.Animation?.setAnimationOneShot(this.updateAnimation.bind(this));
-		if(this.ctx.Animation !== undefined)
-			this.ctx.Animation.applyOneShotAnimation();
+		this.ctx?.Animation?.setAnimationUpdateCallback(this.updateAnimation.bind(this));
 
         if (playerPosition != undefined)
         {
@@ -232,12 +237,15 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
         {
 			this.actionFSM.forceIdle();
         }
+		
+		if(this.ctx.Animation !== undefined)
+			this.ctx.Animation.applyAnimation(dt);
     }
 
     exit(): void
     {
 		this.ctx.HitBox.Collider.setEnabled(false);
-		
+				
         const playerPosition = this.ctx.Rigidbody!.translation();
 		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
@@ -247,7 +255,7 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
         return ctor === PlayerIdleActionState || ctor === PlayerLightAttackState;
     }
 	
-	private updateAnimation(animator:Animator): void
+	private updateAnimation(animator:Animator, dt:number): void
 	{
 		if(this.ctx.Animation !== undefined)
 		{
@@ -269,6 +277,8 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 				.setLoop(LoopOnce, 0)
                 .play();
 			}
+			
+			animator.mixer.update(dt);
 		}
 	}
 }

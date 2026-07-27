@@ -14,6 +14,7 @@ export class Movement
     private lastMoveVector: Vector3 = new Vector3();
     private currentMoveVector: Vector3 = new Vector3();
 	private canStop: boolean = false;
+	private canLockRot: boolean = false;
 	private impulseForce: Vector3 = new Vector3(0, 0, 0);
 	private identityVector: Vector3 = new Vector3(0, 0, 0);
 
@@ -43,6 +44,8 @@ export class Movement
 
     public look(dt: number): void
     {
+		if(this.canLockRot) return;
+				
         const currentAngle = MathUtilsExtended.getAngleFromDirection(this.actorRootObject!.getWorldDirection(new Vector3()));
         const targetAngle = MathUtilsExtended.getAngleFromDirection(new Vector3(this.currentMoveVector.x, 0, this.currentMoveVector.z));
         const angle = MathUtilsExtended.interpolateAngle(currentAngle, targetAngle, this.rotationSpeed * dt);
@@ -54,6 +57,7 @@ export class Movement
 
         const rot: Quaternion = new Quaternion();
         rot.setFromAxisAngle(new Vector3(0, 1, 0), angle);
+		
         this.actorRigidbody?.setRotation(rot, true);
         this.actorRigidbody?.lockRotations(true, true);
     }
@@ -61,6 +65,11 @@ export class Movement
 	public setStopMotion(canStop: boolean): void
 	{
 		this.canStop = canStop;
+	}
+	
+	public setStopRotation(canLock: boolean): void
+	{
+		this.canLockRot = canLock;
 	}
 
     private calculateSpeed(canAccelerate: boolean, dt: number): number

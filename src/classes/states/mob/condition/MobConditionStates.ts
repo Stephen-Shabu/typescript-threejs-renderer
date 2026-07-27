@@ -12,7 +12,7 @@ export class MobNormalState implements StateCapable
 
     enter(): void 
 	{
-		//this.ctx.HurtBox.onActorHit = (hitInfo:HitInfo) => { this.handleOnHurtBoxCollision(hitInfo)};
+		this.ctx.HurtBox.onActorHit = (hitInfo:HitInfo) => { this.handleOnHurtBoxCollision(hitInfo)};
     }
 
     update(dt: number): void
@@ -27,22 +27,29 @@ export class MobNormalState implements StateCapable
 
     exit(): void 
 	{
-		//this.ctx.HurtBox.onActorHit = () => {};
+		this.ctx.HurtBox.onActorHit = () => {};
     }
 	
 	private handleOnHurtBoxCollision(hitInfo:HitInfo): void
-	{	
-		console.log("my hurt box!")
+	{
+		const remainingHealth = this.ctx.Health.reactToHit();
+		console.log("mob health", remainingHealth);
+		
 		const hitDirection = new Vector3(
 			hitInfo.hitNormal.x,
 			hitInfo.hitNormal.y,
 			hitInfo.hitNormal.z
 		);
-		console.log(hitDirection);
-		if(hitDirection)
-			this.ctx.Rigidbody?.setLinvel(hitDirection.clone().multiplyScalar(3), true);
 		
-		this.conditionFSM.changeState(MobHitReactState);
+		if(remainingHealth == 0)
+		{
+			this.conditionFSM.changeState(MobDeathState);
+		}
+		else
+		{	
+			this.ctx.HitDirection = hitDirection;
+			this.conditionFSM.changeState(MobHitReactState);
+		}
 	}
 }
 
@@ -50,6 +57,7 @@ export class MobHitReactState implements StateCapable
 {
 	private readonly HIT_DURATION: number = .2;
 	private hitTimer: number = 0;
+	private readonly HIT_IMPULSE: number = 3;
 	
     constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) 
 	{
@@ -58,9 +66,9 @@ export class MobHitReactState implements StateCapable
 
     enter(): void 
 	{
+		this.ctx.Rigidbody?.setLinvel(this.ctx.HitDirection.clone().multiplyScalar(this.HIT_IMPULSE), true);
 		this.ctx.HurtBox.Collider.setEnabled(false);
 		this.hitTimer = 0;
-        console.log(" hit react state entered");
     }
 
     update(dt: number): void 
@@ -82,25 +90,39 @@ export class MobHitReactState implements StateCapable
 
     exit(): void 
 	{
-		console.log(" hit react state exited");
 		this.ctx.HurtBox.Collider.setEnabled(true);
     }
 }
 
-export class MobDeathState implements StateCapable {
-    constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) {
+export class MobDeathState implements StateCapable 
+{
+	private readonly HIT_DURATION: number = .6;
+	private hitTimer: number = 0;
+	private readonly HIT_IMPULSE: number = 6;
+	private toggle: boolean = false;
+	
+    constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) {}
 
+    enter(): void 
+	{
+        this.ctx.HurtBox.Collider.setEnabled(false);
     }
 
-    enter(): void {
-        console.log("State Entered");
+    update(dt: number): void 
+	{	
+		if(this.hitTimer < this.HIT_DURATION)
+		{
+			this.hitTimer += dt
+		}
+		else if(!this.toggle)
+		{
+			this.toggle = true;
+			console.log("i have finally died!")
+		}
     }
 
-    update(dt: number): void {
-        console.log("State Updating");
-    }
-
-    exit(): void {
-        console.log("State Exited");
+    exit(): void 
+	{
+		
     }
 }

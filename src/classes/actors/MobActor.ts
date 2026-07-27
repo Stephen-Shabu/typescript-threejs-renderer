@@ -15,12 +15,13 @@ import { Object3D } from 'three';
 import { Resources } from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { Movement } from "../gameplay/Movement";
+import { Health } from "../gameplay/Health";
 import { Animation, Animator } from "../gameplay/Animation";
 import { MobContext } from "../states/mob/MobContext";
 import BaseStateMachine from "../../core/StateMachine/BaseStateMachine";
 import { MobWaitState, MobMoveState } from "../../classes/states/mob/movement/MobMovementStates";
 import { MobIdleActionState } from "../../classes/states/mob/action/MobActionStates";
-import { MobNormalState } from "../../classes/states/mob/condition/MobConditionStates";
+import { MobNormalState, MobHitReactState, MobDeathState } from "../../classes/states/mob/condition/MobConditionStates";
 
 export class MobActor extends DynamicActor
 {
@@ -30,6 +31,7 @@ export class MobActor extends DynamicActor
 	private conditionStateMachine: BaseStateMachine = new BaseStateMachine();
 	
     private movementComponent: Movement;
+	private healthComponent: Health;
 	private animationComponent: Animation | undefined = undefined;
 	
 	private hitboxActor: DynamicActor = new DynamicActor(
@@ -65,12 +67,16 @@ export class MobActor extends DynamicActor
 		super(desc);
 		
 		this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
+		this.healthComponent = new Health(10);
+		
 		this.mobContext = {
             Rigidbody: this.actorRigidbody,
             Movement: this.movementComponent,
             Heading: new Vector3(0, 0, 0),
+			HitDirection: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
 			Animation: this.animationComponent,
+			Health: this.healthComponent,
 			HitBox: this.hitboxActor,
 			HurtBox: this.hurtboxActor
         };
@@ -83,6 +89,8 @@ export class MobActor extends DynamicActor
 		this.actionStateMachine.changeState(MobIdleActionState);
 		
 		this.conditionStateMachine.addState(MobNormalState, new MobNormalState(this.conditionStateMachine, this.mobContext));
+		this.conditionStateMachine.addState(MobHitReactState, new MobHitReactState(this.conditionStateMachine, this.mobContext));
+		this.conditionStateMachine.addState(MobDeathState, new MobDeathState(this.conditionStateMachine, this.mobContext));
 		this.conditionStateMachine.changeState(MobNormalState);
     }
 
@@ -109,7 +117,6 @@ export class MobActor extends DynamicActor
 
         this.attachObject(clonedCharacter);
         clonedCharacter.position.y = -1;
-		this.hurtboxActor.onActorHit = (hitInfo:HitInfo) => { this.handleOnHurtBoxCollision(hitInfo)};
     }
 	
 	private handleOnHurtBoxCollision(hitInfo:HitInfo): void

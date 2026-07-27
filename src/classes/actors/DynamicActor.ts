@@ -10,12 +10,12 @@ import { HitInfo } from "../../core/PhysicsWorld";
 
 export class DynamicActor extends PhysicsActor
 {
-	public onActorHit = (hitData:HitInfo) => {};
-	
 	get RigidBody()
 	{
 		return this.actorRigidbody!;
 	}
+	
+	public onActorHit = (hitData:HitInfo) => {};
 	
     protected actorRigidbodyDesc: RAPIER.RigidBodyDesc | undefined;
     protected actorRigidbody: RAPIER.RigidBody | undefined;
@@ -48,14 +48,17 @@ export class DynamicActor extends PhysicsActor
         }
     }
 	
+	
 	public onCollisionStarted(otherActor: PhysicsActor): void
 	{
 		super.onCollisionStarted(otherActor);
-		
+	
 		if(otherActor.ColliderData.hitInfo)
 		{
 			if(this.onActorHit)
+			{
 				this.onActorHit(otherActor.ColliderData.hitInfo);
+			}
 		}
 	}
 }

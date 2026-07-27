@@ -31,16 +31,14 @@ export class PlayerNormalState implements StateCapable {
 	
 	private handleOnHurtBoxCollision(hitInfo:HitInfo): void
 	{	
-		console.log("my hurt box!")
+	
 		const hitDirection = new Vector3(
 			hitInfo.hitNormal.x,
 			hitInfo.hitNormal.y,
 			hitInfo.hitNormal.z
 		);
-		console.log(hitDirection);
-		if(hitDirection)
-			this.ctx.Rigidbody?.setLinvel(hitDirection.clone().multiplyScalar(3), true);
 		
+		this.ctx.HitDirection = hitDirection;
 		this.conditionFSM.changeState(PlayerHitReactState);
 	}
 }
@@ -48,7 +46,9 @@ export class PlayerNormalState implements StateCapable {
 export class PlayerHitReactState implements StateCapable 
 {
 	private readonly HIT_DURATION: number = .2;
+	private readonly HIT_IMPULSE: number = 3;
 	private hitTimer: number = 0;
+	
 	
     constructor(private conditionFSM: BaseStateMachine, private ctx: PlayerContext) 
 	{
@@ -57,6 +57,7 @@ export class PlayerHitReactState implements StateCapable
 
     enter(): void 
 	{
+		this.ctx.Rigidbody?.setLinvel(this.ctx.HitDirection.clone().multiplyScalar(this.HIT_IMPULSE), true);
 		this.ctx.HurtBox.Collider.setEnabled(false);
 		this.hitTimer = 0;
     }

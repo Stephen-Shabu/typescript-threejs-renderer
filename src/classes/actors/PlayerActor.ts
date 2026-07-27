@@ -79,6 +79,7 @@ export class PlayerActor extends DynamicActor
             Camera: camera,
             InputVector: new Vector3(0, 0, 0),
             Heading: new Vector3(0, 0, 0),
+			HitDirection: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
 			Animation: this.animationComponent,
 			HitBox: this.hitboxActor,

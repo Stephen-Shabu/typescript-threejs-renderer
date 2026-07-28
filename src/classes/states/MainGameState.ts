@@ -6,7 +6,7 @@ import { HemisphereLight } from "three/src/lights/HemisphereLight";
 import { DirectionalLight } from "three/src/lights/DirectionalLight";
 import { PlaneGeometry } from "three/src/geometries/PlaneGeometry";
 import { Group } from "three/src/objects/Group.js";
-import { MeshStandardMaterial, Vector2 } from "three";
+import { MeshStandardMaterial, Vector2, Mesh, CameraHelper } from "three";
 import { Texture } from "three";
 import { BoxGeometry } from "three";
 import { CapsuleGeometry } from "three";
@@ -20,7 +20,9 @@ import { DynamicActor } from "../actors/DynamicActor";
 import { PlayerActor } from "../actors/PlayerActor";
 import { MobActor } from "../actors/MobActor";
 import { CollisionGroup, ColliderType } from "../../core/PhysicsWorld";
-import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { LightProbeGrid } from 'three/examples/jsm/lighting/LightProbeGrid.js';
+import { LightProbeGridHelper } from 'three/examples/jsm/helpers/LightProbeGridHelper.js';
+import { Box3, Color } from "three";
 
 export class MainGameState extends GameState
 {
@@ -30,7 +32,7 @@ export class MainGameState extends GameState
 		material: new MeshStandardMaterial(),
 		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
 		.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD | CollisionGroup.ENEMY),
-		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 5, 0),
+		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 3, 0),
 		group: new Group(),
 		colliderData: {colliderType: ColliderType.BODY }
 	}, this.gameCamera);
@@ -46,11 +48,16 @@ export class MainGameState extends GameState
 		colliderData: {colliderType: ColliderType.BODY }
 	});
 	
+	private directionalLight: DirectionalLight = new DirectionalLight(0xffffff, 1);
+	private sunPosition: Vector3 = new Vector3();
+	
     public initialise(): void
     {
         super.initialise();
 
         const physics = Singleton.get().PhysicsWorld;
+		
+		this.sunPosition.setFromSphericalCoords(1, Math.PI * .1, Math.PI *  0.25);
 
         this.resourceModule.loadbundle((loadedBundles) =>
         {
@@ -62,16 +69,14 @@ export class MainGameState extends GameState
 
             if (physics.World)
             {
-				
                 let floorAlphaTexture = new Texture();
                 floorAlphaTexture = this.resourceModule.getAsset("t_alpha_01_d");
 				
-                const groundMat = new MeshStandardMaterial({ color: 0xffffff, alphaMap: floorAlphaTexture, transparent: true });
-                groundMat.color.setHSL(0.095, 1, 0.55);
+                const groundMat = new MeshStandardMaterial({ color: 0x2E8B57, alphaMap: floorAlphaTexture, transparent: true });
 
                 const floorDesc: ActorDesc = 
 				{
-					geometry: new PlaneGeometry(40, 40),
+					geometry: new PlaneGeometry(40 ,40),
 					material: groundMat,
 					colliderDesc: RAPIER.ColliderDesc.cuboid(20.0, 0.1, 20.0)
 				};
@@ -81,10 +86,12 @@ export class MainGameState extends GameState
                 floorActor.Root!.rotation.x = -Math.PI / 2;
 
                 floorActor.addToScene(this.gameScene);
+				console.log(floorActor.Mesh!.material);
+				console.log(floorActor.Root!.name = "floor");
             }
-
             this.spawnTreeElements();
-
+			this.initBake();
+			
         }, "character-models", "utility-textures", "environment-models");
 		
 		const capsuleDesc: ActorDesc = 
@@ -96,7 +103,9 @@ export class MainGameState extends GameState
 		};
 		
 		const capsule: DynamicActor = new DynamicActor(capsuleDesc);
-
+		
+		capsule.Mesh!.castShadow = true;
+		capsule.Mesh!.receiveShadow = true;
 		capsule.addToScene(this.gameScene);
 		
         const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5)
@@ -118,6 +127,8 @@ export class MainGameState extends GameState
 		};
 		
 		const cube: DynamicActor = new DynamicActor(cubeDesc);
+		cube.Mesh!.castShadow = true;
+		cube.Mesh!.receiveShadow = true;
 		const hitCube: DynamicActor = new DynamicActor(
 		{
 			geometry: new BoxGeometry(1, 1, 1),
@@ -137,21 +148,55 @@ export class MainGameState extends GameState
 					}  
 			}
 		});
+		hitCube.Mesh!.castShadow = true;
+		hitCube.Mesh!.receiveShadow = true;
         cube.addToScene(this.gameScene);
 		hitCube.addToScene(this.gameScene);
 		
-        this.gameScene.add(physics.DebugMesh);
-
-        const hemiLight = new HemisphereLight(0xffffff, 0xffffff, 2);
-        hemiLight.color.setHSL(0.6, 1, 0.6);
-        hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-        hemiLight.position.set(0, 50, 0);
-        this.gameScene.add(hemiLight);
+		this.gameScene.add(physics.DebugMesh);
 		
-		const directionalLight = new DirectionalLight(0xffffff, 0.5);
-		this.gameScene.add(directionalLight);
+		this.directionalLight.position.copy(this.sunPosition).multiplyScalar(15);
+		this.directionalLight.castShadow = true;
+		this.directionalLight.shadow.mapSize.width = 2048;
+		this.directionalLight.shadow.mapSize.height = 2048;
+		this.directionalLight.shadow.camera.near = 1;
+		this.directionalLight.shadow.camera.far = 40;
+		this.directionalLight.shadow.camera.left = -20;
+		this.directionalLight.shadow.camera.right = 20;
+		this.directionalLight.shadow.camera.top = 10;
+		this.directionalLight.shadow.camera.bottom = -10;
+		this.directionalLight.shadow.bias = -0.001;
+		
+		this.gameScene.add(this.directionalLight);
+		this.gameScene.add(new CameraHelper(this.directionalLight.shadow.camera));
+		
         console.log("Main Game State initialised");
     }
+	
+	async initBake() : Promise<void>
+	{
+		await this.bake();
+	}
+	
+	async bake(): Promise<void>
+	{
+		this.gameScene.background = new Color(0x87CEEB);
+		const hemiLight = new HemisphereLight(0x87CEEB, 0xFFBF00, 4);
+        hemiLight.position.copy(this.sunPosition).multiplyScalar(15);
+        this.gameScene.add(hemiLight);
+		
+		const lightProbeGrid = new LightProbeGrid(45, 4, 45, 10, 5, 10);
+		this.gameScene.add(lightProbeGrid);
+		lightProbeGrid.position.set(0, 1.2, 0);
+		lightProbeGrid.scene = this.gameScene;
+		
+		lightProbeGrid.bake( this.renderContext.getGLRenderer(), this.gameScene, { cubemapSize: 32, near: 0.05, far: 20 } );
+		
+		this.gameScene.remove(hemiLight);
+		const helper = new LightProbeGridHelper(lightProbeGrid);
+		this.gameScene.add(helper);
+	}
+	
 
     private spawnTreeElements(): void
     {
@@ -172,35 +217,33 @@ export class MainGameState extends GameState
             const grid: Vector2[] | number[] = [];
             const activePoints: Vector2[] = [];
 
-            for (let i = 0; i < cols * rows; i++) {
+            for (let i = 0; i < cols * rows; i++) 
+			{
                 grid[i] = -1;
             }
+			
+			const angle = Math.random() * Math.PI * 2;
+			const radius = 10 + Math.random() * 10;
+			let x = angle;
+			let z = radius;
+			console.log("rand x " + x + "rand z " + z);
+			const iPos: Vector2 | number = new Vector2(x, z);
+			const iRow = Math.floor(x / cellSize);
+			const iCol = Math.floor(z / cellSize);
+			const index = Math.abs(iRow + iCol * cols);
 
-            console.log("grid length: " + grid.length);
+			console.log("initial row " + iRow + "initial col " + iCol);
+			console.log("index " + index);
 
-            const angle = Math.random() * Math.PI * 2;
-            const radius = 10 + Math.random() * 10;
-            let x = -10;
-            let z = -10;
-            console.log("rand x " + x + "rand z " + z);
-            const iPos: Vector2 | number = new Vector2(x, z);
-            const iRow = Math.floor(x / cellSize);
-            const iCol = Math.floor(z / cellSize);
-            const index = Math.abs(iRow + iCol * cols);
-
-            console.log("initial row " + iRow + "initial col " + iCol);
-            console.log("index " + index);
-
-            grid[index] = iPos;
+			grid[index] = iPos;
+			
             activePoints.push(iPos);
 
-            const tree: Group = this.resourceModule.getAsset("sm_common_tree_01") as Group;
-            tree.receiveShadow = true;
-            tree.castShadow = true;
-
-
+            const tree: Group = this.resourceModule.getAsset("sm_rock_moss_07") as Group;
+			
             for (let i = 0; i < grid.length; i++)
             {
+			
                 if (grid[i] != -1)
                 {
                     const clonedTree = tree.clone();
@@ -216,6 +259,7 @@ export class MainGameState extends GameState
 					
 					const treeActor: PhysicsActor = new PhysicsActor(treeDesc);
                     treeActor.Mesh!.receiveShadow = true;
+					treeActor.Mesh!.castShadow = true;
                     treeActor.addToScene(this.gameScene);
                     const pos = grid[i] as Vector2;
                     console.log("Grid Pos X: " + pos.x + "Grid Pos Z: " + pos.y);

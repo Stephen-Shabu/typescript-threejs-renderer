@@ -6,6 +6,11 @@ export class Renderer
     {
         return this.webGlContext.domElement;
     }
+	
+	getGLRenderer(): THREE.WebGLRenderer
+    {
+        return this.webGlContext;
+    }
 
     private activeScene: THREE.Scene = new THREE.Scene();
     private activeCamera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
@@ -15,8 +20,9 @@ export class Renderer
 
     constructor()
     {
-        this.webGlContext = new THREE.WebGLRenderer();
+        this.webGlContext = new THREE.WebGLRenderer({ antialias: true });
         this.webGlContext.shadowMap.enabled = true;
+		this.webGlContext.shadowMap.type = THREE.PCFShadowMap;
         this.webGlContext.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.webGlContext.domElement);
 

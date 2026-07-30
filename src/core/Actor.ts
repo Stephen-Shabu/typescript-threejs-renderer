@@ -1,11 +1,12 @@
-import { Mesh, SkinnedMesh } from 'three';
-import { Group } from 'three';
+import { Mesh } from 'three';
+import { Group, Vector3 } from 'three';
 import { BufferGeometry } from 'three';
 import { Material } from 'three';
 import { Object3D } from 'three';
 import { Scene } from "three/src/scenes/Scene";
 import RAPIER from "./PhysicsWorld";
 import { ColliderType, HitInfo } from "./PhysicsWorld";
+import { UtilityFunctions } from "../classes/utility/UtilityFunctions"
 
 export type ColliderData = 
 {
@@ -15,12 +16,13 @@ export type ColliderData =
 
 export type ActorDesc = 
 {
-	geometry: BufferGeometry;
-	material: Material;
-	group?: Group;
+	geometry?: BufferGeometry;
+	material?: Material;
 	colliderDesc?: RAPIER.ColliderDesc;
 	rigidbodyDesc?: RAPIER.RigidBodyDesc;
 	colliderData?: ColliderData;
+	skinnedRoot?: Group;
+	visualOffset?: Vector3;
 }
 
 export class Actor
@@ -30,44 +32,49 @@ export class Actor
         return this.actorMesh;
     }
 
-    get Root(): Group | undefined
+    get Root(): Group
     {
         return this.actorRootObject;
     }
 
     protected actorMesh: Mesh | undefined;
-    protected actorRootObject: Group | undefined;
+    protected actorRootObject: Group;
 	
 	constructor(desc: ActorDesc)
     {
-        if (desc.group)
-        {
-            this.actorRootObject = desc.group;
-
-            desc.group.traverse((object): void =>
-            {
-                if (object.type.startsWith('SkinnedMesh') || object.type.startsWith('Mesh'))
-                {
-                    this.actorMesh = object as SkinnedMesh | Mesh;
-
-                    if (this.actorRootObject)
-                    {
-                        this.actorRootObject.add(this.actorMesh);
-                    }
-                }
-            });
-
-            return;
-        }
-
-        this.actorMesh = new Mesh(desc.geometry, desc.material);
-        this.actorRootObject = new Group();
-        this.actorRootObject.add(this.actorMesh);
+		this.actorRootObject = new Group();
+		
+		if(desc.skinnedRoot)
+		{
+			const skinned = UtilityFunctions.getSkinnedMesh(desc.skinnedRoot);
+			
+			if(desc.material)
+			{
+				skinned!.material = desc.material;
+			}
+			
+			this.actorMesh = skinned!;
+			this.actorRootObject.add(desc.skinnedRoot);
+		}
+		else
+		{
+			if(desc.geometry && desc.material)
+			{
+				this.actorMesh = new Mesh(desc.geometry, desc.material);
+				this.actorRootObject.add(this.actorMesh);
+			}
+		}
+		
+		if (desc.visualOffset) 
+		{
+			const visualChild = desc.skinnedRoot ?? this.actorMesh;
+			visualChild?.position.add(desc.visualOffset);
+		}
     }
 
     public attachObject(object: Object3D | Group): void
     {
-        this.actorRootObject?.add(object);
+        this.actorRootObject.add(object);
     }
 
     public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void

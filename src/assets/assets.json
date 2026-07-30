@@ -32,6 +32,11 @@
           "alias": "sm_barabian_base_unit_01",
           "type": "gltf",
           "src": "./assets/models/characters/sm_barbarian_base_01.glb"
+        },
+		{
+          "alias": "sm_spartan_spear",
+          "type": "gltf",
+          "src": "./assets/models/props/weapons/sm_spartan_spear.glb"
         }
       ]
     },

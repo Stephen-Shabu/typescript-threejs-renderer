@@ -1,4 +1,5 @@
 import { GameState } from "../../core/GameState";
+import { UtilityFunctions } from "../utility/UtilityFunctions";
 import { ActorDesc, ColliderData } from "../../core/Actor";
 import Singleton from "../../core/Singleton";
 import { Vector3 } from 'three/src/math/Vector3.js';
@@ -10,11 +11,8 @@ import { MeshStandardMaterial, Vector2, Mesh, CameraHelper } from "three";
 import { Texture } from "three";
 import { BoxGeometry } from "three";
 import { CapsuleGeometry } from "three";
-import { LineSegments } from "three";
 import { BufferGeometry } from "three";
-import { LineBasicMaterial } from "three";
 import RAPIER from '../../core/PhysicsWorld';
-import { BufferAttribute } from 'three';
 import { PhysicsActor } from "../actors/PhysicsActor";
 import { DynamicActor } from "../actors/DynamicActor";
 import { PlayerActor } from "../actors/PlayerActor";
@@ -23,30 +21,12 @@ import { CollisionGroup, ColliderType } from "../../core/PhysicsWorld";
 import { LightProbeGrid } from 'three/examples/jsm/lighting/LightProbeGrid.js';
 import { LightProbeGridHelper } from 'three/examples/jsm/helpers/LightProbeGridHelper.js';
 import { Box3, Color } from "three";
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 
 export class MainGameState extends GameState
 {
-	private player: PlayerActor = new PlayerActor(
-	{
-		geometry: new BoxGeometry(1, 1, 1),
-		material: new MeshStandardMaterial(),
-		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
-		.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD | CollisionGroup.ENEMY),
-		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 3, 0),
-		group: new Group(),
-		colliderData: {colliderType: ColliderType.BODY }
-	}, this.gameCamera);
-	
-	private barbarian: MobActor = new MobActor(
-	{
-		geometry: new BoxGeometry(1, 1, 1),
-		material: new MeshStandardMaterial(),
-		colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
-			.setCollisionGroups((CollisionGroup.ENEMY << 16 ) | CollisionGroup.WORLD | CollisionGroup.PLAYER),
-		rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(5, 5, 5),
-		group: new Group(),
-		colliderData: {colliderType: ColliderType.BODY }
-	});
+	private player: PlayerActor | undefined;
+	private barbarian: MobActor | undefined;
 	
 	private directionalLight: DirectionalLight = new DirectionalLight(0xffffff, 1);
 	private sunPosition: Vector3 = new Vector3();
@@ -61,11 +41,47 @@ export class MainGameState extends GameState
 
         this.resourceModule.loadbundle((loadedBundles) =>
         {
-            this.player.addToScene(this.gameScene);
-            this.player.setupCharacterMesh(this.resourceModule, "sm_lone_spartan");
+			const playerResource = this.resourceModule.getAsset("sm_lone_spartan");
+			const playerClone = SkeletonUtils.clone(playerResource.scene) as Group;
+
+			if(playerClone)
+			{
+				this.player = new PlayerActor(
+				{
+					skinnedRoot: playerClone,
+					material: new MeshStandardMaterial(),
+					visualOffset: new Vector3(0, -1, 0),
+					colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
+					.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD | CollisionGroup.ENEMY),
+					rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 3, 0),
+					colliderData: {colliderType: ColliderType.BODY }
+				}, this.gameCamera);
+			}
 			
-			this.barbarian.addToScene(this.gameScene);
-			this.barbarian.setupCharacterMesh(this.resourceModule, "sm_barabian_base_unit_01");
+			
+            this.player?.addToScene(this.gameScene);
+            this.player?.setupCharacterMesh(this.resourceModule, "sm_lone_spartan");
+			
+			const unitResource = this.resourceModule.getAsset("sm_barabian_base_unit_01");
+			const unitClone = SkeletonUtils.clone(unitResource.scene) as Group;
+			const unitMesh = UtilityFunctions.getMesh(unitClone);
+			
+			if(unitMesh)
+			{
+				this.barbarian = new MobActor(
+				{
+					geometry: unitMesh.geometry,
+					material: new MeshStandardMaterial(),
+					visualOffset: new Vector3(0, -1, 0),
+					colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
+						.setCollisionGroups((CollisionGroup.ENEMY << 16 ) | CollisionGroup.WORLD | CollisionGroup.PLAYER),
+					rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(5, 5, 5),
+					colliderData: {colliderType: ColliderType.BODY }
+				});
+			}
+			
+			this.barbarian?.addToScene(this.gameScene);
+			this.barbarian?.setupCharacterMesh(this.resourceModule, "sm_barabian_base_unit_01");
 
             if (physics.World)
             {
@@ -78,7 +94,8 @@ export class MainGameState extends GameState
 				{
 					geometry: new PlaneGeometry(40 ,40),
 					material: groundMat,
-					colliderDesc: RAPIER.ColliderDesc.cuboid(20.0, 0.1, 20.0)
+					colliderDesc: RAPIER.ColliderDesc.cuboid(20.0, 0.1, 20.0),
+					colliderData: {colliderType: ColliderType.BODY }
 				};
 				
                 const floorActor: PhysicsActor = new PhysicsActor(floorDesc);
@@ -99,7 +116,8 @@ export class MainGameState extends GameState
 			geometry: new CapsuleGeometry(0.5),
 			material: new MeshStandardMaterial(),
 			colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5),
-			rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 10)
+			rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 10),
+			colliderData: {colliderType: ColliderType.BODY }
 		};
 		
 		const capsule: DynamicActor = new DynamicActor(capsuleDesc);
@@ -282,7 +300,7 @@ export class MainGameState extends GameState
         let orbitDirection: number = deltaX * dt * 1.5;
         const characterPos = this.player.Root!.position.clone();
         this.player.update(dt);
-		this.barbarian.update(dt);
+		this.barbarian?.update(dt);
 		
         this.gameCamera.updateOrbit(characterPos, orbitDirection, 10, dt);
         this.gameCamera.View.lookAt(characterPos);

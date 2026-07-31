@@ -3,18 +3,14 @@ import BaseStateMachine from "../../../../core/StateMachine/BaseStateMachine";
 import { PlayerContext } from "../PlayerContext";
 import { Vector3 } from "three/src/math/Vector3.js";
 import Singleton from "../../../../core/Singleton";
-import { Animator } from "../../../gameplay/Animation";
-import { AnimationClip } from "three/src/animation/AnimationClip";
 
 export class PlayerMoveState implements StateCapable
 {
-    constructor(private moveFSM: BaseStateMachine, private ctx: PlayerContext) {
-
-    }
+    constructor(private moveFSM: BaseStateMachine, private ctx: PlayerContext) {}
 
     enter(): void
     {
-		this.ctx?.Animation?.setAnimationUpdateCallback(this.updateAnimation.bind(this));
+		this.ctx.Animation?.setIsMoving(true);
     }
 
     update(dt: number): void
@@ -24,7 +20,8 @@ export class PlayerMoveState implements StateCapable
         let sidewardDirection: number = (input.Keys.get('a')?.isDown ? 1 : 0) + (input.Keys.get('d')?.isDown ? -1 : 0);
         let forwardDirection: number = (input.Keys.get('w')?.isDown ? 1 : 0) + (input.Keys.get('s')?.isDown ? -1 : 0);
 
-        if (sidewardDirection == 0 && forwardDirection == 0) {
+        if (sidewardDirection == 0 && forwardDirection == 0 || this.ctx?.IsAttackPause) 
+		{
             this.ctx.InputVector.x = sidewardDirection;
             this.ctx.InputVector.y = forwardDirection;
 
@@ -41,55 +38,20 @@ export class PlayerMoveState implements StateCapable
 
         this.ctx.Movement.move(movementDirection, dt);
         this.ctx.Movement.look(dt);
-		
-		if(this.ctx.Animation !== undefined)
-			this.ctx.Animation.applyAnimation(dt);
     }
 
-    exit(): void
-    {
-
-    }
-	
-	private updateAnimation(animator:Animator, dt:number): void
-	{
-		if(this.ctx.Animation !== undefined)
-		{
-			const clip = AnimationClip.findByName(animator.clips, 'CH_Spartan_Run_Fwd_Loop');
-			const previousAction = this.ctx.Animation.CurrentAction;
-			this.ctx.Animation.CurrentAction = animator.mixer.clipAction(clip);
-		
-			if (previousAction !== this.ctx.Animation.CurrentAction)
-			{
-				if (previousAction)
-				{
-					previousAction.fadeOut(0.25);
-				}
-			
-				this.ctx.Animation.CurrentAction?.reset()
-                .setEffectiveTimeScale(5/2.5)
-                .setEffectiveWeight(1)
-                .fadeIn(0.25)
-                .play();
-			}
-		
-			animator.mixer.update(dt);
-		}
-	}
+    exit(): void {}
 }
 
 export class PlayerIdleState implements StateCapable
 {
     private readonly zeroVector: Vector3 = new Vector3(0, 0, 0);
 
-    constructor(private moveFSM: BaseStateMachine, private ctx: PlayerContext)
-    {
-
-    }
+    constructor(private moveFSM: BaseStateMachine, private ctx: PlayerContext){}
 
     enter(): void
     {
-		this.ctx?.Animation?.setAnimationUpdateCallback(this.updateAnimation.bind(this));
+		this.ctx.Animation?.setIsMoving(false);
     }
 
     update(dt: number): void
@@ -99,7 +61,7 @@ export class PlayerIdleState implements StateCapable
         let sidewardDirection: number = (input.Keys.get('a')?.isDown ? 1 : 0) + (input.Keys.get('d')?.isDown ? -1 : 0);
         let forwardDirection: number = (input.Keys.get('w')?.isDown ? 1 : 0) + (input.Keys.get('s')?.isDown ? -1 : 0);
 
-        if (sidewardDirection != 0 || forwardDirection != 0)
+        if (sidewardDirection != 0 && !this.ctx.IsAttackPause || forwardDirection != 0 && !this.ctx.IsAttackPause)
         {
             this.ctx.InputVector.x = sidewardDirection;
             this.ctx.InputVector.y = forwardDirection;
@@ -109,39 +71,7 @@ export class PlayerIdleState implements StateCapable
 
         this.ctx.Movement.move(this.zeroVector, dt);
         this.ctx.Movement.look(dt);
-		
-		if(this.ctx.Animation !== undefined)
-			this.ctx.Animation.applyAnimation(dt);
     }
 
-    exit(): void
-    {
-	}
-	
-	private updateAnimation(animator:Animator, dt:number): void
-	{	
-		if(this.ctx.Animation !== undefined)
-		{
-			const clip = AnimationClip.findByName(animator.clips, 'CH_Spartan_Idle_Loop');
-			
-			const previousAction = this.ctx.Animation.CurrentAction;
-			this.ctx.Animation.CurrentAction = animator.mixer.clipAction(clip);
-		
-			if (previousAction !== this.ctx.Animation.CurrentAction)
-			{
-				if (previousAction)
-				{
-					previousAction.fadeOut(0.25);
-				}
-				
-				this.ctx.Animation.CurrentAction?.reset()
-                .setEffectiveTimeScale(1)
-                .setEffectiveWeight(1)
-                .fadeIn(0.25)
-                .play();
-			}
-		
-			animator.mixer.update(dt);
-		}
-	}
+    exit(): void {}
 }

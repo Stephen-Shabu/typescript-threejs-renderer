@@ -4,10 +4,6 @@ import { PlayerContext } from "../PlayerContext"
 import RAPIER from '../../../../core/PhysicsWorld';
 import { Vector3 } from "three/src/math/Vector3.js";
 import Singleton from "../../../../core/Singleton";
-import { UtilityFunctions } from "../../../utility/UtilityFunctions";
-import { Animator } from "../../../gameplay/Animation";
-import { AnimationClip } from "three/src/animation/AnimationClip";
-import { AnimationActionLoopStyles, LoopRepeat, LoopOnce } from 'three';
 
 export class PlayerIdleActionState implements ActionStateCapable
 {
@@ -64,10 +60,9 @@ export class PlayerLightAttackState implements ActionStateCapable
         this.timer = 0;
         this.queuedNext = false;
 		
+		this.ctx.Animation?.setAttacking(true);
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
-		
-		this.ctx?.Animation?.setAnimationUpdateCallback(this.updateAnimation.bind(this));
 		
         if (playerPosition != undefined)
         {
@@ -85,8 +80,7 @@ export class PlayerLightAttackState implements ActionStateCapable
 			};
         }
 		
-		this.ctx.Movement.setStopRotation(true);
-		this.ctx.Movement.setStopMotion(true);
+		this.ctx.IsAttackPause = true;
     }
 
     update(dt: number): void
@@ -116,64 +110,67 @@ export class PlayerLightAttackState implements ActionStateCapable
             if (this.queuedNext)
             {
 				console.log("try follow up")
-                this.actionFSM.changeState(PlayerLightAttackFollowUpState);
+
+                this.actionFSM.changeState(PlayerLightAttackRecovery);
             }
             else
             {
                 this.actionFSM.forceIdle();
             }
         }
-		
-		if(this.ctx.Animation !== undefined)
-			this.ctx.Animation.applyAnimation(dt);
     }
 
     exit(): void
     {
+		this.ctx.Animation?.setAttacking(false);
 		this.ctx.HitBox.Collider.setEnabled(false);
-		this.ctx.Movement.setStopMotion(false);
-		this.ctx.Movement.setStopRotation(false);
 		
+		this.ctx.IsAttackPause = false;
         const playerPosition = this.ctx.Rigidbody!.translation();
 		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
 	
     canTransitionTo(ctor: Ctor): boolean
     {
-        return ctor === PlayerIdleActionState || ctor === PlayerLightAttackFollowUpState;
+        return ctor === PlayerIdleActionState || ctor === PlayerLightAttackRecovery;
+    }
+}
+
+export class PlayerLightAttackRecovery implements ActionStateCapable
+{
+	priority: number = 11;
+    canBeInterupted: boolean = false;
+	private timer: number = 0;
+	private readonly DURATION = 0.1;
+	
+	constructor(private actionFSM: PlayerActionStateMachine, private ctx: PlayerContext){}
+	
+	enter(): void
+    {
+		this.timer = 0;
+	}
+	
+	update(dt: number): void
+    {
+        this.timer += dt;
+		
+		if (this.timer >= this.DURATION)
+        {
+			this.actionFSM.changeState(PlayerLightAttackFollowUpState);
+        }
+	}
+	
+	canTransitionTo(ctor: Ctor): boolean
+    {
+        return ctor === PlayerLightAttackFollowUpState;
     }
 	
-	private updateAnimation(animator:Animator, dt:number): void
-	{
-		if(this.ctx.Animation !== undefined)
-		{
-			const clip = AnimationClip.findByName(animator.clips, 'CH_Spartan_Attack_Light');
-			const previousAction = this.ctx.Animation.CurrentAction;
-			this.ctx.Animation.CurrentAction = animator.mixer.clipAction(clip);
-		
-			if (previousAction !== this.ctx.Animation.CurrentAction)
-			{
-				if (previousAction)
-				{
-					previousAction.fadeOut(0.25);
-				}
-			
-				this.ctx.Animation.CurrentAction?.reset()
-                .setEffectiveTimeScale(this.DURATION)
-                .setEffectiveWeight(1)
-                .fadeIn(0.25)
-				.setLoop(LoopOnce, 0)
-                .play();
-			}
-			
-			animator.mixer.update(dt);
-		}
-	}
+	exit(): void {}
 }
 
 export class PlayerLightAttackFollowUpState implements ActionStateCapable
 {
-    priority: number = 11;
+    priority: number = 12;
     canBeInterupted: boolean = false;
     private timer: number = 0;
     private queuedNext: boolean = false;
@@ -188,7 +185,7 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 		console.log("performed light attack follow");
         this.timer = 0;
         this.queuedNext = false;
-		
+		this.ctx.Animation?.setAttacking(true);
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 		
@@ -200,8 +197,6 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 			hitPoint: {x:0, y:0, z:0}, 
 			hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
 		};
-		
-		this.ctx?.Animation?.setAnimationUpdateCallback(this.updateAnimation.bind(this));
 
         if (playerPosition != undefined)
         {
@@ -237,13 +232,11 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
         {
 			this.actionFSM.forceIdle();
         }
-		
-		if(this.ctx.Animation !== undefined)
-			this.ctx.Animation.applyAnimation(dt);
     }
 
     exit(): void
     {
+		this.ctx.Animation?.setAttacking(false);
 		this.ctx.HitBox.Collider.setEnabled(false);
 				
         const playerPosition = this.ctx.Rigidbody!.translation();
@@ -254,31 +247,4 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
     {
         return ctor === PlayerIdleActionState || ctor === PlayerLightAttackState;
     }
-	
-	private updateAnimation(animator:Animator, dt:number): void
-	{
-		if(this.ctx.Animation !== undefined)
-		{
-			const clip = AnimationClip.findByName(animator.clips, 'CH_Spartan_Attack_Light');
-			const previousAction = this.ctx.Animation.CurrentAction;
-			this.ctx.Animation.CurrentAction = animator.mixer.clipAction(clip);
-		
-			if (previousAction !== this.ctx.Animation.CurrentAction)
-			{
-				if (previousAction)
-				{
-					previousAction.fadeOut(0.25);
-				}
-			
-				this.ctx.Animation.CurrentAction?.reset()
-                .setEffectiveTimeScale(this.DURATION)
-                .setEffectiveWeight(1)
-                .fadeIn(0.25)
-				.setLoop(LoopOnce, 0)
-                .play();
-			}
-			
-			animator.mixer.update(dt);
-		}
-	}
 }

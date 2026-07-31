@@ -18,6 +18,7 @@ export class PlayerContext
 	public Animation: Animation | undefined;
 	public HitBox: DynamicActor;
 	public HurtBox: DynamicActor;
+	public IsAttackPause: boolean = false;
 
     constructor(rb: RAPIER.RigidBody | undefined, 
 	move: Movement, 
@@ -28,7 +29,8 @@ export class PlayerContext
 	transform: Group | undefined, 
 	anim: Animation,
 	hitBox:DynamicActor,
-	hurtBox:DynamicActor)
+	hurtBox:DynamicActor,
+	isAttackPause: boolean)
     {
         this.Rigidbody = rb;
         this.Movement = move;
@@ -40,5 +42,6 @@ export class PlayerContext
 		this.HitBox = hitBox;
 		this.HurtBox = hurtBox;
 		this.HitDirection = hitDirection;
+		this.IsAttackPause = isAttackPause;
     }
 }

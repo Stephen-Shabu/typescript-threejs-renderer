@@ -13,10 +13,7 @@ export class Movement
     private rotationSpeed: number = 12;
     private lastMoveVector: Vector3 = new Vector3();
     private currentMoveVector: Vector3 = new Vector3();
-	private canStop: boolean = false;
-	private canLockRot: boolean = false;
 	private impulseForce: Vector3 = new Vector3(0, 0, 0);
-	private identityVector: Vector3 = new Vector3(0, 0, 0);
 
     constructor(private actorRigidbody: RAPIER.RigidBody | undefined, private actorRootObject: Group | undefined) { }
 
@@ -39,13 +36,11 @@ export class Movement
 		vel.lerp(moveVector, dt);
 		vel.y = this.actorRigidbody!.linvel().y;
 		
-        this.actorRigidbody?.setLinvel(this.canStop ? this.identityVector : vel, true);
+        this.actorRigidbody?.setLinvel(vel, true);
     }
 
     public look(dt: number): void
-    {
-		if(this.canLockRot) return;
-				
+    {				
         const currentAngle = MathUtilsExtended.getAngleFromDirection(this.actorRootObject!.getWorldDirection(new Vector3()));
         const targetAngle = MathUtilsExtended.getAngleFromDirection(new Vector3(this.currentMoveVector.x, 0, this.currentMoveVector.z));
         const angle = MathUtilsExtended.interpolateAngle(currentAngle, targetAngle, this.rotationSpeed * dt);
@@ -61,16 +56,6 @@ export class Movement
         this.actorRigidbody?.setRotation(rot, true);
         this.actorRigidbody?.lockRotations(true, true);
     }
-	
-	public setStopMotion(canStop: boolean): void
-	{
-		this.canStop = canStop;
-	}
-	
-	public setStopRotation(canLock: boolean): void
-	{
-		this.canLockRot = canLock;
-	}
 
     private calculateSpeed(canAccelerate: boolean, dt: number): number
     {

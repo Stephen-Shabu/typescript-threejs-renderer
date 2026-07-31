@@ -9,7 +9,7 @@ import { Resources } from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { Movement } from "../gameplay/Movement";
 import { Health } from "../gameplay/Health";
-import { Animation, Animator } from "../gameplay/Animation";
+import { Animation } from "../gameplay/Animation";
 import { MobContext } from "../states/mob/MobContext";
 import BaseStateMachine from "../../core/StateMachine/BaseStateMachine";
 import { MobWaitState, MobMoveState } from "../../classes/states/mob/movement/MobMovementStates";

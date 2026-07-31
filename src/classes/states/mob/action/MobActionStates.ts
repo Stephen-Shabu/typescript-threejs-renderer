@@ -4,7 +4,6 @@ import { MobContext } from "../MobContext"
 import RAPIER from '../../../../core/PhysicsWorld';
 import { Vector3 } from "three/src/math/Vector3.js";
 import Singleton from "../../../../core/Singleton";
-import { UtilityFunctions } from "../../../utility/UtilityFunctions";
 
 export class MobIdleActionState implements ActionStateCapable
 {

@@ -15,11 +15,11 @@ import BaseStateMachine from "../../core/StateMachine/BaseStateMachine";
 import PlayerActionStateMachine from "../states/player/action/PlayerActionStateMachine";
 import { PlayerMoveState, PlayerIdleState } from "../../classes/states/player/movement/PlayerMovementStates";
 import { PlayerNormalState, PlayerHitReactState } from "../../classes/states/player/condition/PlayerConditionStates";
-import { PlayerIdleActionState, PlayerLightAttackState, PlayerLightAttackFollowUpState } from "../states/player/action/PlayerActionStates";
+import { PlayerIdleActionState, PlayerLightAttackState, PlayerLightAttackFollowUpState, PlayerLightAttackRecovery } from "../states/player/action/PlayerActionStates";
 import { PlayerContext } from "../states/player/PlayerContext";
 import { Movement } from "../gameplay/Movement";
 import { OrbitalCamera } from '../../classes/gameplay/OrbitalCamera';
-import { Animation, Animator } from "../gameplay/Animation";
+import { Animation } from "../gameplay/Animation";
 
 export class PlayerActor extends DynamicActor
 {
@@ -72,7 +72,8 @@ export class PlayerActor extends DynamicActor
             Transform: this.actorRootObject,
 			Animation: this.animationComponent,
 			HitBox: this.hitboxActor,
-			HurtBox: this.hurtboxActor
+			HurtBox: this.hurtboxActor,
+			IsAttackPause: false
         };
 
         this.moveStateMachine.addState(PlayerMoveState, new PlayerMoveState(this.moveStateMachine, this.playerContext));
@@ -80,6 +81,7 @@ export class PlayerActor extends DynamicActor
 
         this.actionStateMachine.addState(new PlayerIdleActionState(this.actionStateMachine, this.playerContext));
         this.actionStateMachine.addState(new PlayerLightAttackState(this.actionStateMachine, this.playerContext));
+		this.actionStateMachine.addState(new PlayerLightAttackRecovery(this.actionStateMachine, this.playerContext));
 		this.actionStateMachine.addState(new PlayerLightAttackFollowUpState(this.actionStateMachine, this.playerContext));
         this.actionStateMachine.changeState(PlayerIdleActionState);
 		
@@ -102,10 +104,20 @@ export class PlayerActor extends DynamicActor
 		this.actorMesh!.castShadow = true;
 		this.actorMesh!.receiveShadow = true;
 		
-		this.animationComponent = new Animation({
-			mixer: new AnimationMixer(this.actorRootObject!),
-			clips: resourceModule.getAsset(alias).animations
-		});
+		const playerMixer = new AnimationMixer(this.actorRootObject!);
+		const playerClips = resourceModule.getAsset(alias).animations;
+		
+		const idleAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Idle_Loop'));
+		const runAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Run_Fwd_loop'));
+		const attackAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Attack_Light'));
+		
+		this.animationComponent = new Animation(
+			playerMixer,
+			idleAction,
+			runAction,
+			attackAction
+		);
+		
 		this.playerContext.Animation = this.animationComponent;
 		this.moveStateMachine.changeState(PlayerIdleState);
 
@@ -126,5 +138,10 @@ export class PlayerActor extends DynamicActor
         this.moveStateMachine.update(dt);
         this.actionStateMachine.update(dt);
 		this.conditionStateMachine.update(dt);
+		
+		if(this.animationComponent)
+		{
+			this.animationComponent.update(dt);
+		}
     }
 }

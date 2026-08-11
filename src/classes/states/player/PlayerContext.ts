@@ -1,6 +1,7 @@
 import RAPIER from "../../../core/PhysicsWorld";
 import { Movement } from "../../gameplay/Movement";
 import { Animation } from "../../gameplay/Animation";
+import { Weapon } from "../../gameplay/MeleeWeapon";
 import { Vector3 } from "three/src/math/Vector3.js";
 import { OrbitalCamera } from '../../../classes/gameplay/OrbitalCamera';
 import { Group } from 'three';
@@ -16,8 +17,8 @@ export class PlayerContext
 	public HitDirection: Vector3 = new Vector3(0, 0, 0);
     public Transform: Group | undefined;
 	public Animation: Animation | undefined;
-	public HitBox: DynamicActor;
 	public HurtBox: DynamicActor;
+	public MeleeWeapon: Weapon;
 	public IsAttackPause: boolean = false;
 
     constructor(rb: RAPIER.RigidBody | undefined, 
@@ -28,7 +29,7 @@ export class PlayerContext
 	hitDirection: Vector3,
 	transform: Group | undefined, 
 	anim: Animation,
-	hitBox:DynamicActor,
+	weapon: Weapon,
 	hurtBox:DynamicActor,
 	isAttackPause: boolean)
     {
@@ -39,7 +40,7 @@ export class PlayerContext
         this.Heading = heading;
         this.Transform = transform;
 		this.Animation = anim;
-		this.HitBox = hitBox;
+		this.MeleeWeapon = weapon;
 		this.HurtBox = hurtBox;
 		this.HitDirection = hitDirection;
 		this.IsAttackPause = isAttackPause;

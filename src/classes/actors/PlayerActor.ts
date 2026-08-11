@@ -19,7 +19,10 @@ import { PlayerIdleActionState, PlayerLightAttackState, PlayerLightAttackFollowU
 import { PlayerContext } from "../states/player/PlayerContext";
 import { Movement } from "../gameplay/Movement";
 import { OrbitalCamera } from '../../classes/gameplay/OrbitalCamera';
+import { Weapon } from '../../classes/gameplay/MeleeWeapon';
 import { Animation } from "../gameplay/Animation";
+import { UtilityFunctions } from "../utility/UtilityFunctions";
+import { MeshStandardMaterial, BoxGeometry , Mesh} from "three";
 
 export class PlayerActor extends DynamicActor
 {
@@ -34,16 +37,7 @@ export class PlayerActor extends DynamicActor
     private playerContext: PlayerContext;
     private movementComponent: Movement;
 	private animationComponent: Animation | undefined = undefined;
-	
-	private hitboxActor: DynamicActor = new DynamicActor(
-	{
-		colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
-			.setSensor(true)
-			.setCollisionGroups((CollisionGroup.PLAYER_HITBOX << 16 ) | CollisionGroup.ENEMY_HURTBOX),
-		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
-		colliderData: {colliderType: ColliderType.HITBOX}
-	}
-	);
+	private meleeWeapon: Weapon;
 	
 	private hurtboxActor: DynamicActor = new DynamicActor(
 	{
@@ -57,11 +51,22 @@ export class PlayerActor extends DynamicActor
 	}
 	);
 
-	constructor(desc: ActorDesc, private camera: OrbitalCamera)
+	constructor(desc: ActorDesc, private camera: OrbitalCamera, resourceModule: Resources)
     {	
 		super(desc);
 		
         this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
+		this.meleeWeapon = new Weapon(resourceModule, "sm_spartan_spear",
+		{
+			colliderDesc: RAPIER.ColliderDesc.cuboid(0.1, 0.2, 0.1)
+				.setSensor(true)
+				.setCollisionGroups((CollisionGroup.PLAYER_HITBOX << 16 ) | CollisionGroup.ENEMY_HURTBOX),
+			rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
+			colliderData: { colliderType: ColliderType.HITBOX }
+		});
+		
+		this.animationComponent = this.createAnimation(resourceModule, "sm_lone_spartan");
+		
         this.playerContext = {
             Rigidbody: this.actorRigidbody,
             Movement: this.movementComponent,
@@ -71,13 +76,14 @@ export class PlayerActor extends DynamicActor
 			HitDirection: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
 			Animation: this.animationComponent,
-			HitBox: this.hitboxActor,
+			MeleeWeapon: this.meleeWeapon,
 			HurtBox: this.hurtboxActor,
 			IsAttackPause: false
         };
 
         this.moveStateMachine.addState(PlayerMoveState, new PlayerMoveState(this.moveStateMachine, this.playerContext));
         this.moveStateMachine.addState(PlayerIdleState, new PlayerIdleState(this.moveStateMachine, this.playerContext));
+		this.moveStateMachine.changeState(PlayerIdleState);
 
         this.actionStateMachine.addState(new PlayerIdleActionState(this.actionStateMachine, this.playerContext));
         this.actionStateMachine.addState(new PlayerLightAttackState(this.actionStateMachine, this.playerContext));
@@ -88,6 +94,18 @@ export class PlayerActor extends DynamicActor
 		this.conditionStateMachine.addState(PlayerNormalState, new PlayerNormalState(this.conditionStateMachine, this.playerContext));
 		this.conditionStateMachine.addState(PlayerHitReactState, new PlayerHitReactState(this.conditionStateMachine, this.playerContext));
 		this.conditionStateMachine.changeState(PlayerNormalState);
+		
+		this.actorMesh!.castShadow = true;
+		this.actorMesh!.receiveShadow = true;
+		
+				
+		this.actorRootObject!.traverse((object) => 
+		{
+			if (object.name.startsWith("MCH-hand_tweakL")) 
+			{
+				object.add(this.meleeWeapon!.Root);
+			}
+		});
     }
 
     public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void
@@ -95,15 +113,11 @@ export class PlayerActor extends DynamicActor
         super.addToScene(gameScene);
 		
 		const physics = Singleton.get().PhysicsWorld;
-		physics?.addActor(this.hitboxActor);
 		physics?.addActor(this.hurtboxActor);
     }
-
-    public setupCharacterMesh(resourceModule: Resources, alias: string): void
-    {		
-		this.actorMesh!.castShadow = true;
-		this.actorMesh!.receiveShadow = true;
-		
+	
+	private createAnimation(resourceModule: Resources, alias: string): Animation
+	{
 		const playerMixer = new AnimationMixer(this.actorRootObject!);
 		const playerClips = resourceModule.getAsset(alias).animations;
 		
@@ -111,37 +125,23 @@ export class PlayerActor extends DynamicActor
 		const runAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Run_Fwd_loop'));
 		const attackAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Attack_Light'));
 		
-		this.animationComponent = new Animation(
+		const component = new Animation(
 			playerMixer,
 			idleAction,
 			runAction,
 			attackAction
 		);
 		
-		this.playerContext.Animation = this.animationComponent;
-		this.moveStateMachine.changeState(PlayerIdleState);
-
-		const weapon = SkeletonUtils.clone(resourceModule.getAsset("sm_spartan_spear").scene);
-		this.actorRootObject!.traverse((object) => 
-		{
-			if (object.name.startsWith("MCH-hand_tweakL")) 
-			{
-				object.add(weapon);
-				weapon.rotation.set(Math.PI * 0.5, 0, 0);
-				weapon.position.set(0, 0, -0.5);
-			}
-		});
-    }
+		return component;
+	}
 
     public update(dt: number): void
     {
         this.moveStateMachine.update(dt);
         this.actionStateMachine.update(dt);
 		this.conditionStateMachine.update(dt);
-		
-		if(this.animationComponent)
-		{
-			this.animationComponent.update(dt);
-		}
+
+		this.animationComponent.update(dt);
+		this.meleeWeapon.syncHitboxToSocket();
     }
 }

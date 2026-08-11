@@ -36,4 +36,19 @@ export class UtilityFunctions
 		
 		return mesh;
     }
+	
+	public static getSockets(weaponRoot: Object3D, name: string):Map<string, Object3D>
+    {
+		let socketMap: Map<string, Object3D> = new Map<string, Object3D>();
+		
+		weaponRoot.traverse((obj) => 
+		{
+			if (obj.name.startsWith("socket_"))
+			{
+				socketMap.set(obj.name, obj);
+			}
+		});
+		
+		return socketMap;
+    }
 }

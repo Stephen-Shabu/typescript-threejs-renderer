@@ -10,6 +10,7 @@ import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { Movement } from "../gameplay/Movement";
 import { Health } from "../gameplay/Health";
 import { Animation } from "../gameplay/Animation";
+import { Weapon } from '../../classes/gameplay/MeleeWeapon';
 import { MobContext } from "../states/mob/MobContext";
 import BaseStateMachine from "../../core/StateMachine/BaseStateMachine";
 import { MobWaitState, MobMoveState } from "../../classes/states/mob/movement/MobMovementStates";
@@ -26,16 +27,7 @@ export class MobActor extends DynamicActor
     private movementComponent: Movement;
 	private healthComponent: Health;
 	private animationComponent: Animation | undefined = undefined;
-	
-	private hitboxActor: DynamicActor = new DynamicActor(
-	{
-		colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
-			.setSensor(true)
-			.setCollisionGroups((CollisionGroup.ENEMY_HITBOX << 16 ) | CollisionGroup.PLAYER_HURTBOX),
-		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
-		colliderData: {colliderType: ColliderType.HITBOX}
-	}
-	);
+	private meleeWeapon: Weapon;
 	
 	private hurtboxActor: DynamicActor = new DynamicActor(
 	{
@@ -46,15 +38,24 @@ export class MobActor extends DynamicActor
 			.setCollisionGroups((CollisionGroup.ENEMY_HURTBOX << 16 ) | CollisionGroup.PLAYER_HITBOX),
 		rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 1, 0),
 		colliderData: {colliderType: ColliderType.HURTBOX}
-	}
-	);
+	});
 
-	constructor(desc: ActorDesc)
+	constructor(desc: ActorDesc, resourceModule: Resources)
     {	
 		super(desc);
 		
 		this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
 		this.healthComponent = new Health(10);
+		this.meleeWeapon = new Weapon(resourceModule, "sm_barbarian_axe_01", 
+		{
+			colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
+				.setSensor(true)
+				.setCollisionGroups((CollisionGroup.ENEMY_HITBOX << 16 ) | CollisionGroup.PLAYER_HURTBOX),
+			rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
+			colliderData: {colliderType: ColliderType.HITBOX}
+		});
+		
+		this.actorRootObject!.add(this.meleeWeapon.Root);
 		
 		this.mobContext = {
             Rigidbody: this.actorRigidbody,
@@ -64,7 +65,7 @@ export class MobActor extends DynamicActor
             Transform: this.actorRootObject,
 			Animation: this.animationComponent,
 			Health: this.healthComponent,
-			HitBox: this.hitboxActor,
+			MeleeWeapon: this.meleeWeapon,
 			HurtBox: this.hurtboxActor
         };
 		
@@ -79,6 +80,9 @@ export class MobActor extends DynamicActor
 		this.conditionStateMachine.addState(MobHitReactState, new MobHitReactState(this.conditionStateMachine, this.mobContext));
 		this.conditionStateMachine.addState(MobDeathState, new MobDeathState(this.conditionStateMachine, this.mobContext));
 		this.conditionStateMachine.changeState(MobNormalState);
+		
+		this.actorMesh!.castShadow = true;
+		this.actorMesh!.receiveShadow = true;
     }
 
     public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void
@@ -87,13 +91,6 @@ export class MobActor extends DynamicActor
 		
 		const physics = Singleton.get().PhysicsWorld;
 		physics?.addActor(this.hurtboxActor);
-		physics?.addActor(this.hitboxActor);
-    }
-
-    public setupCharacterMesh(resourceModule: Resources, alias: string): void
-    {
-		this.actorMesh!.castShadow = true;
-		this.actorMesh!.receiveShadow = true;
     }
 
     public update(dt: number): void
@@ -101,5 +98,6 @@ export class MobActor extends DynamicActor
 		this.moveStateMachine.update(dt);
 		this.actionStateMachine.update(dt);
 		this.conditionStateMachine.update(dt);
+		this.meleeWeapon.syncHitboxToSocket();
     }
 }

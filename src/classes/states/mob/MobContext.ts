@@ -6,6 +6,7 @@ import { Vector3 } from "three/src/math/Vector3.js";
 import { OrbitalCamera } from '../../../classes/gameplay/OrbitalCamera';
 import { Group } from 'three';
 import { DynamicActor } from "../../actors/DynamicActor";
+import { Weapon } from "../../gameplay/MeleeWeapon";
 
 export class MobContext
 {	
@@ -15,7 +16,7 @@ export class MobContext
 	public HitDirection: Vector3 = new Vector3(0, 0, 0);
     public Transform: Group | undefined;
 	public Animation: Animation | undefined;
-	public HitBox: DynamicActor;
+	public MeleeWeapon: Weapon;
 	public HurtBox: DynamicActor;
 	public Health: Health;
 
@@ -26,7 +27,7 @@ export class MobContext
 	transform: Group | undefined, 
 	anim: Animation,
 	health: Health,
-	hitBox:DynamicActor,
+	weapon: Weapon,
 	hurtBox:DynamicActor)
     {
         this.Rigidbody = rb;
@@ -34,7 +35,7 @@ export class MobContext
         this.Heading = heading;
         this.Transform = transform;
 		this.Animation = anim;
-		this.HitBox = hitBox;
+		this.MeleeWeapon = weapon;
 		this.HurtBox = hurtBox;
 		this.Health = health;
 		this.HitDirection = hitDirection;

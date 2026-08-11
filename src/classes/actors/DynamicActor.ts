@@ -16,6 +16,7 @@ export class DynamicActor extends PhysicsActor
 	}
 	
 	public onActorHit = (hitData:HitInfo) => {};
+	public onHitboxActivated = (hurtBox:PhysicsActor) => {};
 	
     protected actorRigidbodyDesc: RAPIER.RigidBodyDesc | undefined;
     protected actorRigidbody: RAPIER.RigidBody | undefined;
@@ -58,6 +59,12 @@ export class DynamicActor extends PhysicsActor
 			if(this.onActorHit)
 			{
 				this.onActorHit(otherActor.ColliderData.hitInfo);
+				
+				if (otherActor instanceof (DynamicActor))
+				{
+					const o = otherActor as DynamicActor;
+					o.onHitboxActivated(this)
+				}
 			}
 		}
 	}

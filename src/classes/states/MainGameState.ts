@@ -13,6 +13,7 @@ import { BoxGeometry } from "three";
 import { CapsuleGeometry } from "three";
 import { BufferGeometry } from "three";
 import RAPIER from '../../core/PhysicsWorld';
+import { HitInfo } from '../../core/PhysicsWorld';
 import { PhysicsActor } from "../actors/PhysicsActor";
 import { DynamicActor } from "../actors/DynamicActor";
 import { PlayerActor } from "../actors/PlayerActor";
@@ -55,13 +56,11 @@ export class MainGameState extends GameState
 					.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD | CollisionGroup.ENEMY),
 					rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 3, 0),
 					colliderData: {colliderType: ColliderType.BODY }
-				}, this.gameCamera);
+				}, this.gameCamera, this.resourceModule );
 			}
-			
-			
+						
             this.player?.addToScene(this.gameScene);
-            this.player?.setupCharacterMesh(this.resourceModule, "sm_lone_spartan");
-			
+
 			const unitResource = this.resourceModule.getAsset("sm_barabian_base_unit_01");
 			const unitClone = SkeletonUtils.clone(unitResource.scene) as Group;
 			const unitMesh = UtilityFunctions.getMesh(unitClone);
@@ -77,11 +76,12 @@ export class MainGameState extends GameState
 						.setCollisionGroups((CollisionGroup.ENEMY << 16 ) | CollisionGroup.WORLD | CollisionGroup.PLAYER),
 					rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(5, 5, 5),
 					colliderData: {colliderType: ColliderType.BODY }
-				});
+				},
+				this.resourceModule
+				);
 			}
 			
 			this.barbarian?.addToScene(this.gameScene);
-			this.barbarian?.setupCharacterMesh(this.resourceModule, "sm_barabian_base_unit_01");
 
             if (physics.World)
             {
@@ -136,9 +136,9 @@ export class MainGameState extends GameState
 		const cubeDesc: ActorDesc = 
 		{
 			geometry: new BoxGeometry(1, 1, 1),
-			material: new MeshStandardMaterial(),
+			material: new MeshStandardMaterial({color:0xF54927}),
 			colliderDesc: cubeColliderDesc,
-			rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic()
+			rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased()
 				.setTranslation(0, 1, 5)
 				.setCanSleep(false),
 			colliderData: {colliderType: ColliderType.HURTBOX }

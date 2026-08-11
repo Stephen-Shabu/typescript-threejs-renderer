@@ -14,17 +14,11 @@ export class MobIdleActionState implements ActionStateCapable
 
     enter(): void
     {
-		this.ctx.HitBox.Collider.setEnabled(false);
+		this.ctx.MeleeWeapon.setHitBoxInteractivity(false);
     }
 
     update(dt: number): void
     {
-		const position = this.ctx.Rigidbody?.translation();
-		
-		if (position != undefined) 
-		{
-			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: position.x, y: position.y, z: position.z });
-        }
     }
 
     exit(): void {}

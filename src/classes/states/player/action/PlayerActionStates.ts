@@ -14,18 +14,11 @@ export class PlayerIdleActionState implements ActionStateCapable
 
     enter(): void
     {
-		this.ctx.HitBox.Collider.setEnabled(false);
+		this.ctx.MeleeWeapon.setHitBoxInteractivity(false);
     }
 
     update(dt: number): void
     {
-		const playerPosition = this.ctx.Rigidbody?.translation();
-		
-		if (playerPosition != undefined) 
-		{
-			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
-        }
-		
         const input = Singleton.get().Input;
         let actionPressed: number = (input.MouseButtons.get('leftMouse')?.isDown ? 1 : 0);
 
@@ -66,18 +59,22 @@ export class PlayerLightAttackState implements ActionStateCapable
 		
         if (playerPosition != undefined)
         {
-			this.ctx.HitBox.Collider.setEnabled(true);
+			this.ctx.MeleeWeapon?.setHitBoxInteractivity(true);
             const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
 			attackVector.normalize();
 			
 			const hitDirection = playerForward.clone().normalize();
 			
-			this.ctx.HitBox.ColliderData.hitInfo = 
-			{ 
-				hitPoint: {x:0, y:0, z:0}, 
-				hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
-			};
+			this.ctx.MeleeWeapon.HitBox.onHitboxActivated = (hurtBox) => { this.ctx.MeleeWeapon?.setHitBoxInteractivity(false); }; 
+			
+			if(this.ctx.MeleeWeapon)
+			{
+				this.ctx.MeleeWeapon.ColliderData.hitInfo = 
+				{
+					hitPoint: {x:0, y:0, z:0}, 
+					hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
+				};
+			}
         }
 		
 		this.ctx.IsAttackPause = true;
@@ -91,13 +88,6 @@ export class PlayerLightAttackState implements ActionStateCapable
 		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
-		
-        if (playerPosition != undefined) 
-		{
-            const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
-			this.ctx.HitBox.Collider.setEnabled(false);
-        }
 
         if (this.timer >= this.COMBO_WINDOW_START &&
             this.timer <= this.COMBO_WINDO_END && actionPressed)
@@ -123,11 +113,8 @@ export class PlayerLightAttackState implements ActionStateCapable
     exit(): void
     {
 		this.ctx.Animation?.setAttacking(false);
-		this.ctx.HitBox.Collider.setEnabled(false);
-		
+		this.ctx.MeleeWeapon?.setHitBoxInteractivity(false);
 		this.ctx.IsAttackPause = false;
-        const playerPosition = this.ctx.Rigidbody!.translation();
-		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
     }
 	
     canTransitionTo(ctor: Ctor): boolean
@@ -192,18 +179,13 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 		const hitDirection = playerForward.clone().normalize();
 		this.ctx.Rigidbody?.setLinvel(hitDirection.clone().multiplyScalar(3), true);
 		
-		this.ctx.HitBox.ColliderData.hitInfo = 
-		{ 
+		this.ctx.MeleeWeapon.setHitBoxInteractivity(true);
+		
+		this.ctx.MeleeWeapon.ColliderData.hitInfo = 
+		{
 			hitPoint: {x:0, y:0, z:0}, 
 			hitNormal: {x:hitDirection.x, y:hitDirection.y, z:hitDirection.z}
 		};
-
-        if (playerPosition != undefined)
-        {
-			this.ctx.HitBox.Collider.setEnabled(true);
-            const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
-        }
     }
 
     update(dt: number): void
@@ -215,12 +197,6 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
-		
-        if (playerPosition != undefined) 
-		{
-            const attackVector = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z).add(playerForward);
-			this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: attackVector.x, y: playerPosition.y, z: attackVector.z });
-        }
 
         if (this.timer >= this.COMBO_WINDOW_START &&
             this.timer <= this.COMBO_WINDO_END && actionPressed)
@@ -237,10 +213,7 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
     exit(): void
     {
 		this.ctx.Animation?.setAttacking(false);
-		this.ctx.HitBox.Collider.setEnabled(false);
-				
-        const playerPosition = this.ctx.Rigidbody!.translation();
-		this.ctx.HitBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
+		this.ctx.MeleeWeapon?.setHitBoxInteractivity(false);
     }
 
     canTransitionTo(ctor: Ctor): boolean

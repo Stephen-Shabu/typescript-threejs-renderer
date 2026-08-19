@@ -9,6 +9,7 @@ import { Resources } from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { Movement } from "../gameplay/Movement";
 import { Health } from "../gameplay/Health";
+import HealthFx from "../gameplay/HealthFx";
 import { Animation } from "../gameplay/Animation";
 import { Weapon } from '../../classes/gameplay/MeleeWeapon';
 import { MobContext } from "../states/mob/MobContext";
@@ -26,6 +27,7 @@ export class MobActor extends DynamicActor
 	
     private movementComponent: Movement;
 	private healthComponent: Health;
+	private healthFXComponent: HealthFx;
 	private animationComponent: Animation | undefined = undefined;
 	private meleeWeapon: Weapon;
 	
@@ -46,6 +48,8 @@ export class MobActor extends DynamicActor
 		
 		this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
 		this.healthComponent = new Health(10);
+		this.healthFXComponent = new HealthFx(this.healthComponent , this.actorMesh!.material);
+
 		this.meleeWeapon = new Weapon(resourceModule, "sm_barbarian_axe_01", 
 		{
 			colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)

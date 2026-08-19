@@ -70,3 +70,22 @@ export class YieldInstructions
 		yield null;
 	}
 }
+
+export function genRunner(gen: Generator, dt: number): void
+{
+	const timer = setInterval(()=> 
+	{
+		try 
+		{
+			const result = gen.next();
+			if (result.done)
+			{
+				clearInterval(timer);
+			}
+		} catch (err) 
+		{
+			console.error("coroutine threw:", err);
+			clearInterval(timer);
+		}
+	}, dt * 1000);
+}

@@ -1,5 +1,9 @@
 export class Health
 {
+	public onDamageTaken = (hp: number) => {};
+	public onDeathStarted = (hp: number) => {};
+	public onDeathFinished = () => {};
+	
 	private maxPoints: number;
 	private currentPoints: number;
 	
@@ -16,6 +20,27 @@ export class Health
 			this.currentPoints -= 1;
 		}
 		
+		if(this.onDamageTaken)
+		{
+			this.onDamageTaken(this.currentPoints);
+		}
+		
+		if(this.currentPoints == 0)
+		{
+			if(this.onDeathStarted)
+			{
+				this.onDeathStarted(this.currentPoints);
+			}
+		}
+		
 		return this.currentPoints;
+	}
+	
+	public notifyDeathComplete(): void 
+	{
+		if(this.onDeathFinished)
+		{
+			this.onDeathFinished();
+		}
 	}
 }

@@ -1,7 +1,12 @@
 import * as THREE from 'three';
 
 export class Renderer
-{
+{	
+	static get DeltaTime(): number
+	{
+		return Renderer.DELTA_TIME;
+	}
+	
     getCanvas(): HTMLCanvasElement
     {
         return this.webGlContext.domElement;
@@ -12,6 +17,7 @@ export class Renderer
         return this.webGlContext;
     }
 
+	private static DELTA_TIME: number = 0;
     private activeScene: THREE.Scene = new THREE.Scene();
     private activeCamera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
     private webGlContext: THREE.WebGLRenderer;
@@ -48,7 +54,7 @@ export class Renderer
             const time = performance.now();
             let deltaTime = (time - prevTime) / 1000;
             this.elapsedTime += deltaTime;
-
+			Renderer.DELTA_TIME = deltaTime;
             updateGameState(deltaTime);
 
             prevTime = time;

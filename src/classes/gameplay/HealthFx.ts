@@ -9,7 +9,7 @@ export default class HealthFx
 	private healthComponent: Health;
 	private targetMaterials: Array<MeshStandardMaterial> = new Array();
 	private cachedColour: Color;
-	private const HIT_FLASH_DURATION: number = 0.1f;
+	private readonly HIT_FLASH_DURATION: number = 0.1;
 	
 	constructor(health: Health, materials: Material | Array<Material>)
 	{

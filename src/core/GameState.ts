@@ -37,7 +37,7 @@ export class GameState
     {
         const gridHelper = new GridHelper(400, 40);
         const axesHelper = new AxesHelper(5);
-        this.gameScene.add(axesHelper)
+        this.gameScene.add(axesHelper);
         this.gameScene.add(gridHelper);
     }
 

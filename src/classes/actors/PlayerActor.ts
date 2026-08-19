@@ -36,7 +36,7 @@ export class PlayerActor extends DynamicActor
 
     private playerContext: PlayerContext;
     private movementComponent: Movement;
-	private animationComponent: Animation | undefined = undefined;
+	private animationComponent: Animation;
 	private meleeWeapon: Weapon;
 	
 	private hurtboxActor: DynamicActor = new DynamicActor(

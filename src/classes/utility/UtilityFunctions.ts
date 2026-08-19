@@ -52,3 +52,21 @@ export class UtilityFunctions
 		return socketMap;
     }
 }
+
+export class YieldInstructions
+{
+	public static *waitForSeconds(duration:number, dt:number)
+	{
+		while (duration > 0) 
+		{
+			duration -= dt;
+
+			yield;
+		}
+	}
+	
+	public static *waitForFrame()
+	{
+		yield null;
+	}
+}

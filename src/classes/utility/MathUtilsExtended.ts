@@ -43,4 +43,12 @@ export class MathUtilsExtended
             return angle;
         }
     }
+	
+	static shake(initialPos: Vector3, amplitude: number): Vector3
+	{
+		const unitSphere = new Vector3(Math.cos(Math.random()),0, Math.sin(Math.random()))
+		const newPosition = initialPos.add(unitSphere.multiplyScalar(amplitude));
+		
+		return newPosition;
+	}
 }

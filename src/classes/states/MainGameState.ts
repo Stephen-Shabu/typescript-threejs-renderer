@@ -61,7 +61,8 @@ export class MainGameState extends GameState
 						
             this.player?.addToScene(this.gameScene);
 
-			const unitResource = this.resourceModule.getAsset("sm_barabian_base_unit_01");
+			const unitData = this.resourceModule.getUnit("babarian_warior_03");
+			const unitResource = this.resourceModule.getAsset(unitData.mesh);
 			const unitClone = SkeletonUtils.clone(unitResource.scene) as Group;
 			const unitMesh = UtilityFunctions.getMesh(unitClone);
 			
@@ -77,6 +78,7 @@ export class MainGameState extends GameState
 					rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(5, 5, 5),
 					colliderData: {colliderType: ColliderType.BODY }
 				},
+				unitData,
 				this.resourceModule
 				);
 			}

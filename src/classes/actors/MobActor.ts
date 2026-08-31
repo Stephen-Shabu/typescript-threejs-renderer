@@ -5,7 +5,7 @@ import RAPIER from "../../core/PhysicsWorld";
 import { CollisionGroup, ColliderType, HitInfo } from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Vector3 } from "three/src/math/Vector3.js";
-import { Resources } from "../../core/Resources";
+import { Resources, Unit as} from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { Movement } from "../gameplay/Movement";
 import { Health } from "../gameplay/Health";
@@ -42,7 +42,7 @@ export class MobActor extends DynamicActor
 		colliderData: {colliderType: ColliderType.HURTBOX}
 	});
 
-	constructor(desc: ActorDesc, resourceModule: Resources)
+	constructor(desc: ActorDesc, unitData: Unit, resourceModule: Resources)
     {	
 		super(desc);
 		
@@ -50,7 +50,7 @@ export class MobActor extends DynamicActor
 		this.healthComponent = new Health(10);
 		this.healthFXComponent = new HealthFx(this.healthComponent , this.actorMesh!.material);
 
-		this.meleeWeapon = new Weapon(resourceModule, "sm_barbarian_axe_01", 
+		this.meleeWeapon = new Weapon(resourceModule, unitData.weapon, 
 		{
 			colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
 				.setSensor(true)

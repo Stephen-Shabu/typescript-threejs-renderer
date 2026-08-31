@@ -4,27 +4,41 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { TextureLoader } from 'three/src/loaders/TextureLoader';
 import { AudioLoader } from 'three/src/loaders/AudioLoader';
 
+export interface Unit 
+{
+	name: string;
+	mesh: string;
+	weapon: string;
+}
+
 export class Resources
 {
 	private bundleList: Record<string, { name: string, assets: { alias: string; type: string; src: string }[] }>;
+	private unitList: Record<string, { name: string, units: Unit[] }>;
 	private assets: Record<string, any>;
-;
+	private units: Record<string, any>;
+	
 	constructor()
 	{
 		this.assets = {};
 		this.bundleList = {};
+		this.unitList = {};
+		this.units = {};
 	}
 
 	public async init(): Promise<void>
 	{
 		try
 		{
-			const response = await fetch("./assets/assets.json")
-			const data = await response.json();
+			const assetsResponse = await fetch("./assets/assets.json");
+			const unitsResponse = await fetch("./assets/data/units.json");
+			
+			const assetData = await assetsResponse.json();
+			const unitData = await unitsResponse.json();
 
-			this.bundleList = Object.fromEntries(data.bundles.map((bundle: any) => [bundle.name, bundle]));
-
-			console.log("Bundle List Loaded:", this.bundleList);
+			this.bundleList = Object.fromEntries(assetData.bundles.map((bundle: any) => [bundle.name, bundle]));
+			this.unitList = Object.fromEntries(unitData.units.map((unitCategory: any) => [unitCategory.name, unitCategory ]));
+			this.loadUnitCategories();
 		}
 		catch (e)
 		{
@@ -93,5 +107,18 @@ export class Resources
 	public getAsset(alias: string): any
 	{
 		return this.assets[alias] || undefined;
+	}
+	
+	public getUnit(name: string): Unit
+	{
+		return this.units[name] || undefined;
+	}
+	
+	private loadUnitCategories(): void
+	{
+		Object.entries(this.unitList).forEach(([name, category])=> 
+		{
+			category.units.map(unit => this.units[unit.name] = unit)
+		});
 	}
 }

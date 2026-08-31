@@ -1,0 +1,49 @@
+{	
+	"units": [
+	{
+		"name": "barbarian_base_units",
+		"units": [
+		{
+			"name": "babarian_warior_01",
+			"mesh": "sm_barabian_base_unit_01",
+			"weapon": "sm_barbarian_axe_01"
+		},
+		{
+			"name": "babarian_warior_02",
+			"mesh": "sm_barabian_base_unit_01",
+			"weapon": "sm_barbarian_axe_02"
+		},
+		{
+			"name": "babarian_warior_03",
+			"mesh": "sm_barabian_base_unit_01",
+			"weapon": "sm_barbarian_short_sword_01"
+		},
+		{
+			"name": "babarian_archer_01",
+			"mesh": "sm_barabian_archer_unit_01",
+			"weapon": "sm_barbarian_short_sword_01"
+		}
+		]
+	},
+	{
+		"name": "barbarian_champion_units",
+		"units": [
+		{
+			"name": "babarian_champion_01",
+			"mesh": "sm_barabian_champion_unit_01",
+			"weapon": "sm_barbarian_battle_axe_01"
+		},
+		{
+			"name": "babarian_champion_02",
+			"mesh": "sm_barabian_champion_unit_01",
+			"weapon": "sm_barbarian_claymore_01"
+		},
+		{
+			"name": "babarian_champion_03",
+			"mesh": "sm_barbarian_warhammer_01",
+			"weapon": "sm_barbarian_battle_axe_01"
+		}
+		]
+	}
+	]
+}

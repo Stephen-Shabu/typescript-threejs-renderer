@@ -3,21 +3,25 @@ import BaseStateMachine from "../../../../core/StateMachine/BaseStateMachine"
 import { MobContext } from "../MobContext"
 import { HitInfo } from "../../../../core/PhysicsWorld";
 import { Vector3 } from "three/src/math/Vector3.js";
+import { MathUtilsExtended } from "../../../utility/MathUtilsExtended"
 
 export class MobNormalState implements StateCapable 
 {
-    constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) {
-
+	private meshPos: Vector3;
+    constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) 
+	{
+		this.meshPos = this.ctx.ActorMesh!.position;
     }
 
     enter(): void 
 	{
 		this.ctx.HurtBox.onActorHit = (hitInfo:HitInfo) => { this.handleOnHurtBoxCollision(hitInfo)};
+		this.ctx.ActorMesh?.position.set(0, this.ctx.ActorMesh.position.y, 0);
     }
 
     update(dt: number): void
 	{	
-		const position = this.ctx.Rigidbody?.translation();
+		const position = this.ctx.Transform?.position;
 		
 		if (position != undefined) 
 		{
@@ -57,6 +61,7 @@ export class MobHitReactState implements StateCapable
 {
 	private readonly HIT_DURATION: number = .2;
 	private hitTimer: number = 0;
+	private hitReactAmplitude: number = 7;
 	private readonly HIT_IMPULSE: number = 3;
 	
     constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) 
@@ -67,6 +72,7 @@ export class MobHitReactState implements StateCapable
     enter(): void 
 	{
 		this.ctx.Rigidbody?.setLinvel(this.ctx.HitDirection.clone().multiplyScalar(this.HIT_IMPULSE), true);
+		this.ctx.Animation.setIsHit(true);
 		this.ctx.HurtBox.Collider.setEnabled(false);
 		this.hitTimer = 0;
     }
@@ -74,12 +80,19 @@ export class MobHitReactState implements StateCapable
     update(dt: number): void 
 	{
 		this.hitTimer += dt;
+		this.hitReactAmplitude -= dt;
 		
 		const position = this.ctx.Rigidbody?.translation();
+		const rootTrans = this.ctx.Transform!.position;
 		
 		if (position != undefined) 
 		{
 			this.ctx.HurtBox.RigidBody.setNextKinematicTranslation({ x: position.x, y: position.y, z: position.z });
+			
+			const shakeVector = MathUtilsExtended.shake(new Vector3(position.x, position.y, position.z), this.hitReactAmplitude);
+			let newPosition = new Vector3(position.x, position.y, position.z);
+			newPosition.lerp(shakeVector, dt);
+			this.ctx.Transform!.position.add(newPosition.sub(rootTrans));
         }
 		
 		if(this.hitTimer >= this.HIT_DURATION)
@@ -91,6 +104,7 @@ export class MobHitReactState implements StateCapable
     exit(): void 
 	{
 		this.ctx.HurtBox.Collider.setEnabled(true);
+		this.ctx.Animation.setIsHit(false);
     }
 }
 

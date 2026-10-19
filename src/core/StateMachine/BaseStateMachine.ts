@@ -9,7 +9,6 @@ export default class BaseStateMachine
     public addState<T extends StateCapable>(cls: new (...args: any[]) => T ,state: T): void
     {
         this.states.set(cls, state);
-        console.log(cls);
     }
 
     public changeState<T extends StateCapable>(ctor: new (...args: any[]) => T): void

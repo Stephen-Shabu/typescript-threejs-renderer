@@ -31,6 +31,7 @@ export class MobWaitState implements StateCapable
 
     enter(): void
     {
+		this.ctx.Animation?.setIsMoving(false);
     }
 
     update(dt: number): void

@@ -30,17 +30,17 @@ export default class HealthFx
 	
 	private handleOnDamageTaken(hp: number): void
 	{
-		genRunner(this.hitFlashGenerator(), Renderer.DeltaTime);
+		genRunner(this.hitFlashGenerator());
 	}
 	
 	private handleOnDeathStarted (hp: number): void
 	{
-		genRunner(this.deathGenerator(), Renderer.DeltaTime);
+		genRunner(this.deathGenerator());
 	}
 	
 	private *deathGenerator()
 	{
-		yield* YieldInstructions.waitForSeconds(this.HIT_FLASH_DURATION, Renderer.DeltaTime);
+		yield* YieldInstructions.waitForSeconds(this.HIT_FLASH_DURATION);
 		
 		this.healthComponent.notifyDeathComplete();
 	}

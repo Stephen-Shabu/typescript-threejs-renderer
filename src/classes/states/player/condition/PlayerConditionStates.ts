@@ -3,6 +3,7 @@ import BaseStateMachine from "../../../../core/StateMachine/BaseStateMachine"
 import { PlayerContext } from "../PlayerContext"
 import { HitInfo } from "../../../../core/PhysicsWorld";
 import { Vector3 } from "three/src/math/Vector3.js";
+import { MathUtilsExtended } from "../../../utility/MathUtilsExtended";
 
 export class PlayerNormalState implements StateCapable {
     constructor(private conditionFSM: BaseStateMachine, private ctx: PlayerContext) {
@@ -47,6 +48,7 @@ export class PlayerHitReactState implements StateCapable
 {
 	private readonly HIT_DURATION: number = .2;
 	private readonly HIT_IMPULSE: number = 3;
+	private hitReactAmplitude: number = 5;
 	private hitTimer: number = 0;
 	
 	
@@ -65,12 +67,19 @@ export class PlayerHitReactState implements StateCapable
     update(dt: number): void 
 	{
 		this.hitTimer += dt;
+		this.hitReactAmplitude -= dt;
 		
 		const playerPosition = this.ctx.Rigidbody?.translation();
+		const rootTrans = this.ctx.Transform!.position;
 		
 		if (playerPosition != undefined) 
 		{
 			this.ctx.HurtBox.RigidBody.setNextKinematicTranslation({ x: playerPosition.x, y: playerPosition.y, z: playerPosition.z });
+			
+			const shakeVector = MathUtilsExtended.shake(new Vector3(playerPosition.x, playerPosition.y, playerPosition.z), this.hitReactAmplitude);
+			let newPosition = new Vector3(playerPosition.x, playerPosition.y, playerPosition.z);
+			newPosition.lerp(shakeVector, dt);
+			this.ctx.Transform!.position.add(newPosition.sub(rootTrans));
         }
 		
 		if(this.hitTimer >= this.HIT_DURATION)

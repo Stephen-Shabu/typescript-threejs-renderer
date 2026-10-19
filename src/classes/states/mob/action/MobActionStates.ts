@@ -28,3 +28,28 @@ export class MobIdleActionState implements ActionStateCapable
         return true;
     }
 }
+
+export class MobRangedActionState implements ActionStateCapable
+{
+	priority: number = 0;
+    canBeInterupted: boolean = true;
+
+    constructor(private actionFSM: BaseStateMachine, private ctx: MobContext) { }
+
+    enter(): void
+    {
+		this.ctx.MeleeWeapon.setHitBoxInteractivity(false);
+    }
+
+    update(dt: number): void
+    {
+		
+    }
+
+    exit(): void {}
+
+    canTransitionTo(ctor: Ctor): boolean
+    {
+        return ctor === MobIdleActionState;
+    }
+}

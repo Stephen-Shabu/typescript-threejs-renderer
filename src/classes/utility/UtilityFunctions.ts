@@ -1,4 +1,5 @@
 import { Mesh, SkinnedMesh, Object3D, Group } from 'three';
+import { Renderer } from "../../core/Renderer";
 
 export class UtilityFunctions
 {
@@ -55,11 +56,11 @@ export class UtilityFunctions
 
 export class YieldInstructions
 {
-	public static *waitForSeconds(duration:number, dt:number)
+	public static *waitForSeconds(duration:number)
 	{
 		while (duration > 0) 
 		{
-			duration -= dt;
+			duration -= Renderer.DeltaTime;
 
 			yield;
 		}
@@ -71,7 +72,7 @@ export class YieldInstructions
 	}
 }
 
-export function genRunner(gen: Generator, dt: number): void
+export function genRunner(gen: Generator): void
 {
 	const timer = setInterval(()=> 
 	{
@@ -87,5 +88,6 @@ export function genRunner(gen: Generator, dt: number): void
 			console.error("coroutine threw:", err);
 			clearInterval(timer);
 		}
-	}, dt * 1000);
+
+	}, Renderer.DeltaTime * 1000);
 }

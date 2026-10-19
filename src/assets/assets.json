@@ -21,7 +21,7 @@
 		{
           "alias": "sm_barabian_base_unit_01",
           "type": "gltf",
-          "src": "./assets/models/characters/sm_barbarian_base_01.glb"
+          "src": "./assets/models/characters/sm_barbarian_base_02.glb"
         },
 		{
           "alias": "sm_barabian_archer_unit_01",

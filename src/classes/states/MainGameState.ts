@@ -1,5 +1,5 @@
 import { GameState } from "../../core/GameState";
-import { UtilityFunctions } from "../utility/UtilityFunctions";
+import { UtilityFunctions, YieldInstructions, genRunner } from "../utility/UtilityFunctions";
 import { ActorDesc, ColliderData } from "../../core/Actor";
 import Singleton from "../../core/Singleton";
 import { Vector3 } from 'three/src/math/Vector3.js';
@@ -65,12 +65,13 @@ export class MainGameState extends GameState
 			const unitResource = this.resourceModule.getAsset(unitData.mesh);
 			const unitClone = SkeletonUtils.clone(unitResource.scene) as Group;
 			const unitMesh = UtilityFunctions.getMesh(unitClone);
-			
-			if(unitMesh)
+			//skinnedRoot: unitClone,
+			if(unitClone)
 			{
 				this.barbarian = new MobActor(
 				{
-					geometry: unitMesh.geometry,
+					//geometry: unitMesh.geometry,
+					skinnedRoot: unitClone,
 					material: new MeshStandardMaterial(),
 					visualOffset: new Vector3(0, -1, 0),
 					colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)

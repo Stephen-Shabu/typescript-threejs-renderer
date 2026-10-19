@@ -4,6 +4,7 @@ import { PlayerContext } from "../PlayerContext"
 import RAPIER from '../../../../core/PhysicsWorld';
 import { Vector3 } from "three/src/math/Vector3.js";
 import Singleton from "../../../../core/Singleton";
+import { YieldInstructions, genRunner } from "../../../utility/UtilityFunctions";
 
 export class PlayerIdleActionState implements ActionStateCapable
 {
@@ -44,7 +45,8 @@ export class PlayerLightAttackState implements ActionStateCapable
     private queuedNext: boolean = false;
     private readonly DURATION = 0.6;
     private readonly COMBO_WINDOW_START = 0.3;
-    private readonly COMBO_WINDO_END = 0.6;
+    private readonly COMBO_WINDOW_END = 0.6;
+	private readonly HIT_STOP_DURATION = 0.2;
 
     constructor(private actionFSM: PlayerActionStateMachine, private ctx: PlayerContext){}
 
@@ -65,7 +67,11 @@ export class PlayerLightAttackState implements ActionStateCapable
 			
 			const hitDirection = playerForward.clone().normalize();
 			
-			this.ctx.MeleeWeapon.HitBox.onHitboxActivated = (hurtBox) => { this.ctx.MeleeWeapon?.setHitBoxInteractivity(false); }; 
+			this.ctx.MeleeWeapon.HitBox.onHitboxActivated = (hurtBox) => 
+			{ 
+				this.ctx.MeleeWeapon?.setHitBoxInteractivity(false);
+				genRunner(this.applyHitStop());
+			}; 
 			
 			if(this.ctx.MeleeWeapon)
 			{
@@ -90,7 +96,7 @@ export class PlayerLightAttackState implements ActionStateCapable
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 
         if (this.timer >= this.COMBO_WINDOW_START &&
-            this.timer <= this.COMBO_WINDO_END && actionPressed)
+            this.timer <= this.COMBO_WINDOW_END && actionPressed)
         {
             this.queuedNext = true;
         }
@@ -121,6 +127,15 @@ export class PlayerLightAttackState implements ActionStateCapable
     {
         return ctor === PlayerIdleActionState || ctor === PlayerLightAttackRecovery;
     }
+	
+	private *applyHitStop()
+	{
+		this.ctx.Animation?.setHitStop(true);
+		
+		yield* YieldInstructions.waitForSeconds(this.HIT_STOP_DURATION);
+		
+		this.ctx.Animation?.setHitStop(false);
+	}
 }
 
 export class PlayerLightAttackRecovery implements ActionStateCapable

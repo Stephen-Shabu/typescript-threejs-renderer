@@ -46,9 +46,11 @@ export class MathUtilsExtended
 	
 	static shake(initialPos: Vector3, amplitude: number): Vector3
 	{
-		const unitSphere = new Vector3(Math.cos(Math.random()),0, Math.sin(Math.random()))
-		const newPosition = initialPos.add(unitSphere.multiplyScalar(amplitude));
+		const angle = Math.random() * Math.PI * 2;
+		const radius = amplitude * Math.sqrt(Math.random());
 		
-		return newPosition;
+		const offset = new Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+		
+		return initialPos.add(offset);
 	}
 }

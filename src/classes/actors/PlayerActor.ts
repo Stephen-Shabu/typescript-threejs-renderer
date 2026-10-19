@@ -98,7 +98,6 @@ export class PlayerActor extends DynamicActor
 		this.actorMesh!.castShadow = true;
 		this.actorMesh!.receiveShadow = true;
 		
-				
 		this.actorRootObject!.traverse((object) => 
 		{
 			if (object.name.startsWith("MCH-hand_tweakL")) 
@@ -124,12 +123,14 @@ export class PlayerActor extends DynamicActor
 		const idleAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Idle_Loop'));
 		const runAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Run_Fwd_loop'));
 		const attackAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Attack_Light'));
+		const hurtAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Hurt_Fwd'));
 		
 		const component = new Animation(
 			playerMixer,
 			idleAction,
 			runAction,
-			attackAction
+			attackAction,
+			hurtAction
 		);
 		
 		return component;

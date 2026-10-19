@@ -5,11 +5,14 @@ import RAPIER from "../../core/PhysicsWorld";
 import { CollisionGroup, ColliderType, HitInfo } from "../../core/PhysicsWorld";
 import { Scene } from "three/src/scenes/Scene";
 import { Vector3 } from "three/src/math/Vector3.js";
-import { Resources, Unit as} from "../../core/Resources";
+import { Resources, Unit } from "../../core/Resources";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import { Movement } from "../gameplay/Movement";
 import { Health } from "../gameplay/Health";
 import HealthFx from "../gameplay/HealthFx";
+import { AnimationMixer } from "three/src/animation/AnimationMixer";
+import { AnimationClip } from "three/src/animation/AnimationClip";
+import { AnimationAction } from "three/src/animation/AnimationAction";
 import { Animation } from "../gameplay/Animation";
 import { Weapon } from '../../classes/gameplay/MeleeWeapon';
 import { MobContext } from "../states/mob/MobContext";
@@ -28,7 +31,7 @@ export class MobActor extends DynamicActor
     private movementComponent: Movement;
 	private healthComponent: Health;
 	private healthFXComponent: HealthFx;
-	private animationComponent: Animation | undefined = undefined;
+	private animationComponent: Animation;
 	private meleeWeapon: Weapon;
 	
 	private hurtboxActor: DynamicActor = new DynamicActor(
@@ -47,19 +50,19 @@ export class MobActor extends DynamicActor
 		super(desc);
 		
 		this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
-		this.healthComponent = new Health(10);
+		this.healthComponent = new Health(100);
 		this.healthFXComponent = new HealthFx(this.healthComponent , this.actorMesh!.material);
 
 		this.meleeWeapon = new Weapon(resourceModule, unitData.weapon, 
 		{
-			colliderDesc: RAPIER.ColliderDesc.cuboid(0.2, 0.2, 0.2)
+			colliderDesc: RAPIER.ColliderDesc.cuboid(0.05, 0.22, 0.1)
 				.setSensor(true)
 				.setCollisionGroups((CollisionGroup.ENEMY_HITBOX << 16 ) | CollisionGroup.PLAYER_HURTBOX),
 			rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased(),
 			colliderData: {colliderType: ColliderType.HITBOX}
 		});
 		
-		this.actorRootObject!.add(this.meleeWeapon.Root);
+		this.animationComponent = this.createAnimation(resourceModule, unitData.mesh);
 		
 		this.mobContext = {
             Rigidbody: this.actorRigidbody,
@@ -67,6 +70,7 @@ export class MobActor extends DynamicActor
             Heading: new Vector3(0, 0, 0),
 			HitDirection: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
+			ActorMesh: this.actorMesh,
 			Animation: this.animationComponent,
 			Health: this.healthComponent,
 			MeleeWeapon: this.meleeWeapon,
@@ -87,7 +91,37 @@ export class MobActor extends DynamicActor
 		
 		this.actorMesh!.castShadow = true;
 		this.actorMesh!.receiveShadow = true;
+		
+		this.actorRootObject!.traverse((object) => 
+		{
+			if (object.name.startsWith("MCH-hand_tweakL")) 
+			{
+				object.add(this.meleeWeapon!.Root);
+			}
+		});
     }
+	
+	private createAnimation(resourceModule: Resources, alias: string): Animation
+	{
+		const mixer = new AnimationMixer(this.actorRootObject!);
+		const clips = resourceModule.getAsset(alias).animations;
+		console.log(clips);
+		
+		const idleAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Idle_Loop'));
+		const runAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Run_Fwd_Loop'));
+		const attackAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Attack_Light_01'));
+		const hurtAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Hurt_Fwd_01'));
+		
+		const component = new Animation(
+			mixer,
+			idleAction,
+			runAction,
+			attackAction,
+			hurtAction
+		);
+		
+		return component;
+	}
 
     public addToScene(gameScene: Scene, canSetBasePosition?: boolean): void
     {
@@ -102,6 +136,8 @@ export class MobActor extends DynamicActor
 		this.moveStateMachine.update(dt);
 		this.actionStateMachine.update(dt);
 		this.conditionStateMachine.update(dt);
+		
+		this.animationComponent.update(dt);
 		this.meleeWeapon.syncHitboxToSocket();
     }
 }

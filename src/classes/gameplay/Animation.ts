@@ -15,15 +15,21 @@ export class Animation
 	private idleState: AnimationState;
 	private runState: AnimationState;
 	private attackState: AnimationState;
+	private hurtState: AnimationState;
 	private currentState: AnimationState; 
 	private mixer: AnimationMixer;
 	
-	constructor(mixer: AnimationMixer, idleAction: AnimationAction, runAction: AnimationAction, attackAction: AnimationAction)
+	constructor(mixer: AnimationMixer, 
+	idleAction: AnimationAction, 
+	runAction: AnimationAction, 
+	attackAction: AnimationAction,
+	hurtAction: AnimationAction)
 	{
 		this.mixer = mixer;
 		this.idleState = { action: idleAction };
 		this.runState = { action: runAction };
 		this.attackState = { action: attackAction };
+		this.hurtState = { action: hurtAction };
 		this.currentState = this.idleState;
 	}
 	
@@ -83,6 +89,33 @@ export class Animation
 		{
 			this.setIsMoving(this.isMoving);
 		}
+	}
+	
+	public setIsHit(isHurt: boolean): void
+	{
+		if(isHurt)
+		{
+			const previousState = this.currentState;
+			previousState.action.fadeOut(0);
+		
+			this.currentState = this.hurtState;
+			this.currentState.action.reset()
+                .setEffectiveTimeScale(1)
+                .setEffectiveWeight(1)
+                .fadeIn(0)
+				.setLoop(LoopOnce, 1)
+                .play();
+		}
+		else
+		{
+			this.setIsMoving(false);
+		}
+	}
+	
+	public setHitStop(canStop: boolean): void
+	{
+		const scale = canStop ? 0 : 1;
+		this.currentState.action.setEffectiveTimeScale(scale);
 	}
 	
 	public update(dt: number)

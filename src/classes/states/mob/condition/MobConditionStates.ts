@@ -8,6 +8,7 @@ import { MathUtilsExtended } from "../../../utility/MathUtilsExtended"
 export class MobNormalState implements StateCapable 
 {
 	private meshPos: Vector3;
+	
     constructor(private conditionFSM: BaseStateMachine, private ctx: MobContext) 
 	{
 		this.meshPos = this.ctx.ActorMesh!.position;
@@ -44,6 +45,7 @@ export class MobNormalState implements StateCapable
 			hitInfo.hitNormal.y,
 			hitInfo.hitNormal.z
 		);
+		this.ctx.HitDirection = hitDirection;
 		
 		if(remainingHealth == 0)
 		{
@@ -51,7 +53,6 @@ export class MobNormalState implements StateCapable
 		}
 		else
 		{	
-			this.ctx.HitDirection = hitDirection;
 			this.conditionFSM.changeState(MobHitReactState);
 		}
 	}
@@ -72,7 +73,18 @@ export class MobHitReactState implements StateCapable
     enter(): void 
 	{
 		this.ctx.Rigidbody?.setLinvel(this.ctx.HitDirection.clone().multiplyScalar(this.HIT_IMPULSE), true);
-		this.ctx.Animation.setIsHit(true);
+		const forward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
+		
+		const dot = forward.dot(this.ctx.HitDirection);
+		if(dot > 0)
+		{
+			this.ctx.Animation.playActionOnce("Hurt_Bck", {fadeOut: 0, fadeIn:0, weight: 1, timeScale: 1});
+		}
+		else
+		{
+			this.ctx.Animation.playActionOnce("Hurt_Fwd", {fadeOut: 0, fadeIn:0, weight: 1, timeScale: 1});
+		}
+		
 		this.ctx.HurtBox.Collider.setEnabled(false);
 		this.hitTimer = 0;
     }
@@ -104,7 +116,6 @@ export class MobHitReactState implements StateCapable
     exit(): void 
 	{
 		this.ctx.HurtBox.Collider.setEnabled(true);
-		this.ctx.Animation.setIsHit(false);
     }
 }
 
@@ -119,6 +130,18 @@ export class MobDeathState implements StateCapable
 
     enter(): void 
 	{
+		this.ctx.Rigidbody?.setLinvel(this.ctx.HitDirection.clone().multiplyScalar(this.HIT_IMPULSE), true);
+		const forward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
+
+		const dot = forward.dot(this.ctx.HitDirection);
+		if(dot > 0)
+		{
+			this.ctx.Animation.playActionOnceClamped("Death_Bck");
+		}
+		else
+		{
+			this.ctx.Animation.playActionOnceClamped("Death_Fwd");
+		}
         this.ctx.HurtBox.Collider.setEnabled(false);
     }
 

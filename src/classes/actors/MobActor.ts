@@ -18,7 +18,7 @@ import { Weapon } from '../../classes/gameplay/MeleeWeapon';
 import { MobContext } from "../states/mob/MobContext";
 import BaseStateMachine from "../../core/StateMachine/BaseStateMachine";
 import { MobWaitState, MobMoveState } from "../../classes/states/mob/movement/MobMovementStates";
-import { MobIdleActionState } from "../../classes/states/mob/action/MobActionStates";
+import { MobIdleActionState, MobMeleeActionState } from "../../classes/states/mob/action/MobActionStates";
 import { MobNormalState, MobHitReactState, MobDeathState } from "../../classes/states/mob/condition/MobConditionStates";
 
 export class MobActor extends DynamicActor
@@ -50,7 +50,7 @@ export class MobActor extends DynamicActor
 		super(desc);
 		
 		this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
-		this.healthComponent = new Health(100);
+		this.healthComponent = new Health(5);
 		this.healthFXComponent = new HealthFx(this.healthComponent , this.actorMesh!.material);
 
 		this.meleeWeapon = new Weapon(resourceModule, unitData.weapon, 
@@ -82,6 +82,7 @@ export class MobActor extends DynamicActor
 		this.moveStateMachine.changeState(MobWaitState);
 		
 		this.actionStateMachine.addState(MobIdleActionState, new MobIdleActionState(this.actionStateMachine, this.mobContext));
+		this.actionStateMachine.addState(MobMeleeActionState, new MobMeleeActionState(this.actionStateMachine, this.mobContext));
 		this.actionStateMachine.changeState(MobIdleActionState);
 		
 		this.conditionStateMachine.addState(MobNormalState, new MobNormalState(this.conditionStateMachine, this.mobContext));
@@ -107,18 +108,17 @@ export class MobActor extends DynamicActor
 		const clips = resourceModule.getAsset(alias).animations;
 		console.log(clips);
 		
-		const idleAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Idle_Loop'));
-		const runAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Run_Fwd_Loop'));
-		const attackAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Attack_Light_01'));
-		const hurtAction = mixer.clipAction(AnimationClip.findByName(clips, 'AI_Barbarian_Hurt_Fwd_01'));
+		const map = {} as Record<string, AnimationClip>;
 		
-		const component = new Animation(
-			mixer,
-			idleAction,
-			runAction,
-			attackAction,
-			hurtAction
-		);
+		map["Idle"] = AnimationClip.findByName(clips, 'AI_Barbarian_Idle_Loop');
+		map["Run"] = AnimationClip.findByName(clips, 'AI_Barbarian_Run_Fwd_Loop');
+		map["Attack_Light_01"] = AnimationClip.findByName(clips, 'AI_Barbarian_Attack_Light_01');
+		map["Hurt_Fwd"] = AnimationClip.findByName(clips, 'AI_Barbarian_Hurt_Fwd_01');
+		map["Hurt_Bck"] = AnimationClip.findByName(clips, 'AI_Barbarian_Hurt_Bck_01');
+		map["Death_Fwd"] = AnimationClip.findByName(clips, 'AI_Barbarian_Death_Fwd_01');
+		map["Death_Bck"] = AnimationClip.findByName(clips, 'AI_Barbarian_Death_Bck_01');
+		console.log(map);
+		const component = new Animation(mixer, map);
 		
 		return component;
 	}

@@ -55,8 +55,9 @@ export class PlayerLightAttackState implements ActionStateCapable
         this.timer = 0;
         this.queuedNext = false;
 		
-		this.ctx.Animation?.setAttacking(true);
-        const playerPosition = this.ctx.Rigidbody?.translation();
+		this.ctx.Animation?.playActionOnce("Attack_Light_01", {fadeOut: 0.25, fadeIn: 0.1, weight: 1, timeScale: 1})
+        
+		const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 		
         if (playerPosition != undefined)
@@ -118,7 +119,11 @@ export class PlayerLightAttackState implements ActionStateCapable
 
     exit(): void
     {
-		this.ctx.Animation?.setAttacking(false);
+		if(this.ctx.InputVector.length() == 0 && this.ctx.IsAttackPause)
+		{
+			this.ctx.Animation?.playAction("Idle", {fadeOut:.25, fadeIn: .25, weight: 1, timeScale: 1});	
+		}
+		
 		this.ctx.MeleeWeapon?.setHitBoxInteractivity(false);
 		this.ctx.IsAttackPause = false;
     }
@@ -187,7 +192,8 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 		console.log("performed light attack follow");
         this.timer = 0;
         this.queuedNext = false;
-		this.ctx.Animation?.setAttacking(true);
+		this.ctx.Animation?.playActionOnce("Attack_Light_01", {fadeOut: 0.25, fadeIn: 0.1, weight: 1, timeScale: 1});
+		
         const playerPosition = this.ctx.Rigidbody?.translation();
         const playerForward: Vector3 = new Vector3(0, 0, 1).applyQuaternion(this.ctx.Transform!.quaternion);
 		
@@ -227,7 +233,6 @@ export class PlayerLightAttackFollowUpState implements ActionStateCapable
 
     exit(): void
     {
-		this.ctx.Animation?.setAttacking(false);
 		this.ctx.MeleeWeapon?.setHitBoxInteractivity(false);
     }
 

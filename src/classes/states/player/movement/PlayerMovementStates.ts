@@ -10,7 +10,8 @@ export class PlayerMoveState implements StateCapable
 
     enter(): void
     {
-		this.ctx.Animation?.setIsMoving(true);
+		this.ctx.IsMoving = true;
+		this.ctx.Animation?.playAction("Run", {fadeOut:0.25, fadeIn: 0.25, weight: 1, timeScale: 5/2.5});
     }
 
     update(dt: number): void
@@ -51,7 +52,9 @@ export class PlayerIdleState implements StateCapable
 
     enter(): void
     {
-		this.ctx.Animation?.setIsMoving(false);
+		this.ctx.IsMoving = false;
+		if(!this.ctx?.IsAttackPause)
+			this.ctx.Animation?.playAction("Idle", {fadeOut:0.25, fadeIn: 0.25, weight: 1, timeScale: 1});
     }
 
     update(dt: number): void

@@ -78,7 +78,8 @@ export class PlayerActor extends DynamicActor
 			Animation: this.animationComponent,
 			MeleeWeapon: this.meleeWeapon,
 			HurtBox: this.hurtboxActor,
-			IsAttackPause: false
+			IsAttackPause: false,
+			IsMoving: false
         };
 
         this.moveStateMachine.addState(PlayerMoveState, new PlayerMoveState(this.moveStateMachine, this.playerContext));
@@ -118,20 +119,19 @@ export class PlayerActor extends DynamicActor
 	private createAnimation(resourceModule: Resources, alias: string): Animation
 	{
 		const playerMixer = new AnimationMixer(this.actorRootObject!);
-		const playerClips = resourceModule.getAsset(alias).animations;
+		const clips = resourceModule.getAsset(alias).animations;
 		
-		const idleAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Idle_Loop'));
-		const runAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Run_Fwd_loop'));
-		const attackAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Attack_Light'));
-		const hurtAction = playerMixer.clipAction(AnimationClip.findByName(playerClips, 'CH_Spartan_Hurt_Fwd'));
+		const map = {} as Record<string, AnimationClip>;
 		
-		const component = new Animation(
-			playerMixer,
-			idleAction,
-			runAction,
-			attackAction,
-			hurtAction
-		);
+		map["Idle"] = AnimationClip.findByName(clips, 'CH_Spartan_Idle_Loop');
+		map["Run"] = AnimationClip.findByName(clips, 'CH_Spartan_Run_Fwd_loop');
+		map["Attack_Light_01"] = AnimationClip.findByName(clips, 'CH_Spartan_Attack_Light');
+		map["Hurt_Fwd"] = AnimationClip.findByName(clips, 'CH_Spartan_Hurt_Fwd');
+		map["Hurt_Bck"] = AnimationClip.findByName(clips, 'CH_Spartan_Hurt_Bck_01');
+		map["Death_Fwd"] = AnimationClip.findByName(clips, 'CH_Spartan_Death_Fwd_01');
+		map["Death_Bck"] = AnimationClip.findByName(clips, 'CH_Spartan_Death_Bck_01');
+		
+		const component = new Animation(playerMixer, map);
 		
 		return component;
 	}

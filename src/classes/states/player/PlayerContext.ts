@@ -20,6 +20,7 @@ export class PlayerContext
 	public HurtBox: DynamicActor;
 	public MeleeWeapon: Weapon;
 	public IsAttackPause: boolean = false;
+	public IsMoving: boolean = false;
 
     constructor(rb: RAPIER.RigidBody | undefined, 
 	move: Movement, 
@@ -31,7 +32,8 @@ export class PlayerContext
 	anim: Animation,
 	weapon: Weapon,
 	hurtBox:DynamicActor,
-	isAttackPause: boolean)
+	isAttackPause: boolean,
+	isMoving: boolean)
     {
         this.Rigidbody = rb;
         this.Movement = move;
@@ -44,5 +46,6 @@ export class PlayerContext
 		this.HurtBox = hurtBox;
 		this.HitDirection = hitDirection;
 		this.IsAttackPause = isAttackPause;
+		this.IsMoving = isMoving;
     }
 }

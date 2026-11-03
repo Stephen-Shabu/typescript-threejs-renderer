@@ -31,8 +31,7 @@ export class Movement
 
         let speed = this.calculateSpeed(canAccelerate, dt);
         let moveVector = this.currentMoveVector.clone().multiplyScalar(speed);
-		//moveVector.y = this.actorRigidbody!.linvel().y;
-		//this.actorRigidbody?.setLinvel(moveVector, true);
+		
 		let vel = new Vector3(this.actorRigidbody!.linvel().x, this.actorRigidbody!.linvel().y, this.actorRigidbody!.linvel().z);
 		vel.lerp(moveVector, dt * this.topSpeed);
 		vel.y = this.actorRigidbody!.linvel().y;

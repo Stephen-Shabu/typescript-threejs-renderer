@@ -65,12 +65,11 @@ export class MainGameState extends GameState
 			const unitResource = this.resourceModule.getAsset(unitData.mesh);
 			const unitClone = SkeletonUtils.clone(unitResource.scene) as Group;
 			const unitMesh = UtilityFunctions.getMesh(unitClone);
-			//skinnedRoot: unitClone,
+			
 			if(unitClone)
 			{
 				this.barbarian = new MobActor(
 				{
-					//geometry: unitMesh.geometry,
 					skinnedRoot: unitClone,
 					material: new MeshStandardMaterial(),
 					visualOffset: new Vector3(0, -1, 0),

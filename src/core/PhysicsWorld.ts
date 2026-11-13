@@ -89,12 +89,9 @@ export class PhysicsWorld
 			{    
 				if(!started) return;
 				
-				console.log(`col event: ${handle1} ${handle2} ${started}`);
-				
 				const col1 = this.physicsActors.get(handle1);
 				const col2 = this.physicsActors.get(handle2);
 				
-			
 				if(col1?.ColliderData.colliderType === ColliderType.HITBOX && col2?.ColliderData.colliderType === ColliderType.HURTBOX)
 				{
 					col2?.onCollisionStarted(col1!);
@@ -102,6 +99,7 @@ export class PhysicsWorld
 				else if(col2?.ColliderData.colliderType === ColliderType.HITBOX && col1?.ColliderData.colliderType === ColliderType.HURTBOX)
 				{
 					col1?.onCollisionStarted(col2!);
+					console.log(`col event: ${handle1} ${handle2} ${started}`);
 				}
 				else
 				{
@@ -125,7 +123,7 @@ export class PhysicsWorld
 	public addActor(actor: PhysicsActor): void
 	{
 		var colliderHandle = actor.ColliderHandle;
-		console.log(`actor: ${colliderHandle} ${actor}`);
+
 		if (colliderHandle !== undefined)
 		{
 			this.physicsActors.set(colliderHandle, actor);
@@ -133,7 +131,6 @@ export class PhysicsWorld
 			{
 				if (!this.dynamicActors.has(colliderHandle))
 				{
-					console.log(`added dynamic actor: ${colliderHandle} ${actor}`);
 					this.dynamicActors.set(colliderHandle, actor);
 				}
 			}

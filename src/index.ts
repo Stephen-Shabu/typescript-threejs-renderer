@@ -4,7 +4,8 @@ import { GameState } from './core/GameState';
 import { SplashState } from './classes/states/SplashState';
 import { MainGameState } from './classes/states/MainGameState';
 import Singleton from './core/Singleton';
-import { Resources } from "./core/Resources"
+import { Resources } from "./core/Resources";
+
 export class App
 {
     private renderBackend: Renderer;

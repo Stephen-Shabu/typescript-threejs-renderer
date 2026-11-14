@@ -63,14 +63,14 @@ export class PlayerIdleState implements StateCapable
 
         let sidewardDirection: number = (input.Keys.get('a')?.isDown ? 1 : 0) + (input.Keys.get('d')?.isDown ? -1 : 0);
         let forwardDirection: number = (input.Keys.get('w')?.isDown ? 1 : 0) + (input.Keys.get('s')?.isDown ? -1 : 0);
-
+		
         if (sidewardDirection != 0 && !this.ctx.IsAttackPause || forwardDirection != 0 && !this.ctx.IsAttackPause)
         {
-            this.ctx.InputVector.x = sidewardDirection;
-            this.ctx.InputVector.y = forwardDirection;
-
             this.moveFSM.changeState(PlayerMoveState);
         }
+		
+		this.ctx.InputVector.x = sidewardDirection;
+		this.ctx.InputVector.y = forwardDirection;
 
         this.ctx.Movement.move(this.zeroVector, dt);
         this.ctx.Movement.look(dt);

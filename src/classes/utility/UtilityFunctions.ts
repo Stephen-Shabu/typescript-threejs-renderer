@@ -23,6 +23,22 @@ export class UtilityFunctions
 		return mesh;
     }
 	
+	public static getMeshes(group: Group): Mesh[]
+    {
+		const meshes: Mesh[] = [];
+		
+		group.traverse((object): void =>
+		{	
+			if (object.type.startsWith('Mesh'))
+			{		
+				const mesh = object as Mesh;
+				meshes.push(mesh);
+			}
+		});
+		
+		return meshes;
+    }
+	
 	public static getSkinnedMesh(group: Group):SkinnedMesh | undefined
     {
 		let mesh: Mesh | undefined = undefined;

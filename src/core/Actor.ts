@@ -16,7 +16,7 @@ export type ColliderData =
 
 export type ActorDesc = 
 {
-	geometry?: BufferGeometry;
+	geometries?: BufferGeometry[];
 	material?: Material;
 	colliderDesc?: RAPIER.ColliderDesc;
 	rigidbodyDesc?: RAPIER.RigidBodyDesc;
@@ -25,19 +25,25 @@ export type ActorDesc =
 	visualOffset?: Vector3;
 }
 
+type ShadowArgs = 
+{
+	canCast: boolean;
+	canRecieve: boolean;
+}
+
 export class Actor
 {
-    get Mesh(): Mesh | undefined
+	get Meshes(): Mesh[]
     {
-        return this.actorMesh;
+        return this.meshes;
     }
 
     get Root(): Group
     {
         return this.actorRootObject;
     }
-
-    protected actorMesh: Mesh | undefined;
+	
+	protected meshes: Mesh[] = [];
     protected actorRootObject: Group;
 	
 	constructor(desc: ActorDesc)
@@ -53,24 +59,37 @@ export class Actor
 				skinned!.material = desc.material;
 			}
 			
-			this.actorMesh = skinned!;
+			this.meshes.push(skinned!);
 			this.actorRootObject.add(desc.skinnedRoot);
 		}
 		else
 		{
-			if(desc.geometry && desc.material)
+			if(desc.geometries && desc.material)
 			{
-				this.actorMesh = new Mesh(desc.geometry, desc.material);
-				this.actorRootObject.add(this.actorMesh);
+				for(let i = 0; i < desc.geometries.length; i++)
+				{
+					const mesh = new Mesh(desc.geometries[i], desc.material);
+					this.meshes.push(mesh);
+					this.actorRootObject.add(mesh);
+				}
 			}
 		}
 		
 		if (desc.visualOffset) 
 		{
-			const visualChild = desc.skinnedRoot ?? this.actorMesh;
+			const visualChild = desc.skinnedRoot ?? this.meshes[0];
 			visualChild?.position.add(desc.visualOffset);
 		}
     }
+	
+	public setShadowSetting(args: ShadowArgs): void
+	{
+		for(let i = 0; i < this.meshes.length; i++)
+		{
+			this.meshes[i].receiveShadow = args.canRecieve;
+			this.meshes[i].castShadow = args.canCast;
+		}
+	}
 
     public attachObject(object: Object3D | Group): void
     {

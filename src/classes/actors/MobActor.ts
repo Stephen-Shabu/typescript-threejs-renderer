@@ -51,7 +51,7 @@ export class MobActor extends DynamicActor
 		
 		this.movementComponent = new Movement(this.actorRigidbody, this.actorRootObject);
 		this.healthComponent = new Health(5);
-		this.healthFXComponent = new HealthFx(this.healthComponent , this.actorMesh!.material);
+		this.healthFXComponent = new HealthFx(this.healthComponent , this.meshes[0].material);
 
 		this.meleeWeapon = new Weapon(resourceModule, unitData.weapon, 
 		{
@@ -70,7 +70,7 @@ export class MobActor extends DynamicActor
             Heading: new Vector3(0, 0, 0),
 			HitDirection: new Vector3(0, 0, 0),
             Transform: this.actorRootObject,
-			ActorMesh: this.actorMesh,
+			ActorMesh: this.meshes[0],
 			Animation: this.animationComponent,
 			Health: this.healthComponent,
 			MeleeWeapon: this.meleeWeapon,
@@ -90,8 +90,7 @@ export class MobActor extends DynamicActor
 		this.conditionStateMachine.addState(MobDeathState, new MobDeathState(this.conditionStateMachine, this.mobContext));
 		this.conditionStateMachine.changeState(MobNormalState);
 		
-		this.actorMesh!.castShadow = true;
-		this.actorMesh!.receiveShadow = true;
+		this.setShadowSetting({canCast:true, canRecieve: true});
 		
 		this.actorRootObject!.traverse((object) => 
 		{

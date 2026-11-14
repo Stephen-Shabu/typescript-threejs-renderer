@@ -95,9 +95,8 @@ export class PlayerActor extends DynamicActor
 		this.conditionStateMachine.addState(PlayerNormalState, new PlayerNormalState(this.conditionStateMachine, this.playerContext));
 		this.conditionStateMachine.addState(PlayerHitReactState, new PlayerHitReactState(this.conditionStateMachine, this.playerContext));
 		this.conditionStateMachine.changeState(PlayerNormalState);
-		
-		this.actorMesh!.castShadow = true;
-		this.actorMesh!.receiveShadow = true;
+
+		this.setShadowSetting({canCast:true, canRecieve: true});
 		
 		this.actorRootObject!.traverse((object) => 
 		{

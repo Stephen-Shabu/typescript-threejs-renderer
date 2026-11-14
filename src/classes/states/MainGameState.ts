@@ -94,39 +94,30 @@ export class MainGameState extends GameState
 
                 const floorDesc: ActorDesc = 
 				{
-					geometry: new PlaneGeometry(40 ,40),
+					geometries: [new PlaneGeometry(40 ,40)],
 					material: groundMat,
 					colliderDesc: RAPIER.ColliderDesc.cuboid(20.0, 0.1, 20.0),
 					colliderData: {colliderType: ColliderType.BODY }
 				};
 				
                 const floorActor: PhysicsActor = new PhysicsActor(floorDesc);
-				floorActor.Mesh!.receiveShadow = true;
+				floorActor.setShadowSetting({canCast: false, canRecieve: true});
                 floorActor.Root!.rotation.x = -Math.PI / 2;
-
                 floorActor.addToScene(this.gameScene);
-				console.log(floorActor.Mesh!.material);
-				console.log(floorActor.Root!.name = "floor");
             }
-            this.spawnTreeElements();
-			this.initBake();
 			
+			const propResource = this.resourceModule.getAsset("sm_barbarian_warhammer_01");
+			const propClone = SkeletonUtils.clone(propResource.scene) as Group;
+			const propMesh = UtilityFunctions.getMesh(propClone);
+			
+			const prop = new Mesh(propMesh!.geometry, new MeshStandardMaterial({color:0xff6b6b}));
+			prop.position.set(1, 1.5, 2);
+			prop.castShadow = true;
+			prop.receiveShadow = true;
+			this.gameScene.add(prop);
+			
+			this.initBake();	
         }, "character-models", "utility-textures", "environment-models");
-		
-		const capsuleDesc: ActorDesc = 
-		{
-			geometry: new CapsuleGeometry(0.5),
-			material: new MeshStandardMaterial(),
-			colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5),
-			rigidbodyDesc: RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 10),
-			colliderData: {colliderType: ColliderType.BODY }
-		};
-		
-		const capsule: DynamicActor = new DynamicActor(capsuleDesc);
-		
-		capsule.Mesh!.castShadow = true;
-		capsule.Mesh!.receiveShadow = true;
-		capsule.addToScene(this.gameScene);
 		
         const cubeColliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5)
 			.setCollisionGroups((CollisionGroup.ENEMY_HURTBOX << 16 ) | CollisionGroup.PLAYER_HITBOX)
@@ -137,7 +128,7 @@ export class MainGameState extends GameState
 
 		const cubeDesc: ActorDesc = 
 		{
-			geometry: new BoxGeometry(1, 1, 1),
+			geometries: [new BoxGeometry(1, 1, 1)],
 			material: new MeshStandardMaterial({color:0xF54927}),
 			colliderDesc: cubeColliderDesc,
 			rigidbodyDesc: RAPIER.RigidBodyDesc.kinematicPositionBased()
@@ -147,11 +138,12 @@ export class MainGameState extends GameState
 		};
 		
 		const cube: DynamicActor = new DynamicActor(cubeDesc);
-		cube.Mesh!.castShadow = true;
-		cube.Mesh!.receiveShadow = true;
+		cube.setShadowSetting({canCast: true, canRecieve: true});
+		cube.addToScene(this.gameScene);
+		
 		const hitCube: DynamicActor = new DynamicActor(
 		{
-			geometry: new BoxGeometry(1, 1, 1),
+			geometries: [new BoxGeometry(1, 1, 1)],
 			material: new MeshStandardMaterial(),
 			colliderDesc: RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5)
 				.setSensor(true)
@@ -168,9 +160,7 @@ export class MainGameState extends GameState
 					}  
 			}
 		});
-		hitCube.Mesh!.castShadow = true;
-		hitCube.Mesh!.receiveShadow = true;
-        cube.addToScene(this.gameScene);
+		hitCube.setShadowSetting({canCast:true, canRecieve: true});
 		hitCube.addToScene(this.gameScene);
 		
 		this.gameScene.add(physics.DebugMesh);

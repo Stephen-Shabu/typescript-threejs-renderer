@@ -75,8 +75,8 @@
       "assets": [
         {
           "alias": "sm_common_tree_01",
-          "type": "fbx",
-          "src": "./assets/models/enivronment/sm_common_tree_1.fbx"
+          "type": "gltf",
+          "src": "./assets/models/enivronment/sm_tree_detailed.gltf"
         },
         {
           "alias": "sm_courthouse_01",

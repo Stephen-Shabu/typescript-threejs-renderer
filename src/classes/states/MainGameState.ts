@@ -171,10 +171,10 @@ export class MainGameState extends GameState
 		this.directionalLight.shadow.mapSize.height = 2048;
 		this.directionalLight.shadow.camera.near = 1;
 		this.directionalLight.shadow.camera.far = 40;
-		this.directionalLight.shadow.camera.left = -20;
-		this.directionalLight.shadow.camera.right = 20;
-		this.directionalLight.shadow.camera.top = 10;
-		this.directionalLight.shadow.camera.bottom = -10;
+		this.directionalLight.shadow.camera.left = -40;
+		this.directionalLight.shadow.camera.right = 40;
+		this.directionalLight.shadow.camera.top = 20;
+		this.directionalLight.shadow.camera.bottom = -20;
 		this.directionalLight.shadow.bias = -0.001;
 		
 		this.gameScene.add(this.directionalLight);
@@ -200,14 +200,12 @@ export class MainGameState extends GameState
 		lightProbeGrid.position.set(0, 1.2, 0);
 		lightProbeGrid.scene = this.gameScene;
 		
-		lightProbeGrid.bake( this.renderContext.getGLRenderer(), this.gameScene, { cubemapSize: 32, near: 0.05, far: 20 } );
-		
+		lightProbeGrid.bake( this.renderContext.getGLRenderer(), this.gameScene, { cubemapSize: 32, near: 0.05, far: 20, bounces: 3 } );
 		this.gameScene.remove(hemiLight);
 		const helper = new LightProbeGridHelper(lightProbeGrid);
 		this.gameScene.add(helper);
 	}
 	
-
     private spawnTreeElements(): void
     {
         const physics = Singleton.get().PhysicsWorld;

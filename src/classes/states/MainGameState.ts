@@ -7,7 +7,7 @@ import { HemisphereLight } from "three/src/lights/HemisphereLight";
 import { DirectionalLight } from "three/src/lights/DirectionalLight";
 import { PlaneGeometry } from "three/src/geometries/PlaneGeometry";
 import { Group } from "three/src/objects/Group.js";
-import { MeshStandardMaterial, Vector2, Mesh, CameraHelper } from "three";
+import { MeshStandardMaterial, Vector2, Mesh, CameraHelper, InstancedMesh, Matrix4} from "three";
 import { Texture } from "three";
 import { BoxGeometry } from "three";
 import { CapsuleGeometry } from "three";
@@ -21,13 +21,17 @@ import { MobActor } from "../actors/MobActor";
 import { CollisionGroup, ColliderType } from "../../core/PhysicsWorld";
 import { LightProbeGrid } from 'three/examples/jsm/lighting/LightProbeGrid.js';
 import { LightProbeGridHelper } from 'three/examples/jsm/helpers/LightProbeGridHelper.js';
-import { Box3, Color } from "three";
+import { Box3, Color, Object3D } from "three";
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
+import MessageBus from "../messages/MessageBus";
+import { MobDiedMessage } from "../messages/Messages";
+import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
 
 export class MainGameState extends GameState
 {
 	private player: PlayerActor | undefined;
 	private barbarian: MobActor | undefined;
+	private sampler: MeshSurfaceSampler | undefined;
 	
 	private directionalLight: DirectionalLight = new DirectionalLight(0xffffff, 1);
 	private sunPosition: Vector3 = new Vector3();
@@ -104,6 +108,8 @@ export class MainGameState extends GameState
 				floorActor.setShadowSetting({canCast: false, canRecieve: true});
                 floorActor.Root!.rotation.x = -Math.PI / 2;
                 floorActor.addToScene(this.gameScene);
+				this.sampler = new MeshSurfaceSampler(floorActor.Meshes[0]);
+				this.sampler.setWeightAttribute("color").build();
             }
 			
 			const propResource = this.resourceModule.getAsset("sm_barbarian_warhammer_01");
@@ -116,6 +122,7 @@ export class MainGameState extends GameState
 			prop.receiveShadow = true;
 			this.gameScene.add(prop);
 			
+			this.generateEnvironmentTerrain();
 			this.initBake();	
         }, "character-models", "utility-textures", "environment-models");
 		
@@ -206,80 +213,60 @@ export class MainGameState extends GameState
 		this.gameScene.add(helper);
 	}
 	
-    private spawnTreeElements(): void
-    {
-        const physics = Singleton.get().PhysicsWorld;
+	private generateEnvironmentTerrain(): void
+	{
+		const grassResource = this.resourceModule.getAsset("sm_common_tree_01");
+		const grassDenseResource = this.resourceModule.getAsset("sm_common_grass_02");
+		
+		const grassClone = grassDenseResource.scene.clone() as Group;
+		const grassMesh = UtilityFunctions.getMesh(grassClone);
+		const grassInstance = new InstancedMesh(grassMesh!.geometry, new MeshStandardMaterial({color:0x006400}), 1000);
+		
+		const dummy = new Object3D();
+		const grassPosition = new Vector3();
+		
+		for (let i = 0; i < 1000; i++) 
+		{
+			this.sampler!.sample(grassPosition);
+			dummy.position.set(grassPosition.x, 0, grassPosition.y);
+			dummy.scale.set(3, 3, 3);
+			dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
+			dummy.updateMatrix();
+			
+			grassInstance.setMatrixAt(i, dummy.matrix);
+		}
+	
+		grassInstance.instanceMatrix.needsUpdate = true;
+		this.gameScene.add(grassInstance);
 
-        if (physics.World)
-        {
-            const minimumRadius = 5;
-            const maxSampleCount = 30;
-            const cellSize = minimumRadius / Math.sqrt(2);
-            let trees: PhysicsActor[] = [];
-            let samples: Vector2[] = [];
-            const xSize: number = 20;
-            const zSize: number = 20;
-            const cols: number = Math.floor(zSize / cellSize);
-            const rows: number = Math.floor(xSize / cellSize);
-
-            const grid: Vector2[] | number[] = [];
-            const activePoints: Vector2[] = [];
-
-            for (let i = 0; i < cols * rows; i++) 
+		const treeResource = this.resourceModule.getAsset("sm_common_tree_01");
+		const treePosition = new Vector3();
+		
+		for(let i = 0; i < 10; i++)
+		{
+			const clonedTree = treeResource.scene.clone() as Group;
+			const meshes = UtilityFunctions.getMeshes(clonedTree);
+			
+			const treeDesc: ActorDesc = 
 			{
-                grid[i] = -1;
-            }
+				geometries: meshes.map(mesh => mesh.geometry),
+				material: new MeshStandardMaterial(),
+				colliderDesc: RAPIER.ColliderDesc.cylinder(2.5, 0.3),
+			};
 			
-			const angle = Math.random() * Math.PI * 2;
-			const radius = 10 + Math.random() * 10;
-			let x = angle;
-			let z = radius;
-			console.log("rand x " + x + "rand z " + z);
-			const iPos: Vector2 | number = new Vector2(x, z);
-			const iRow = Math.floor(x / cellSize);
-			const iCol = Math.floor(z / cellSize);
-			const index = Math.abs(iRow + iCol * cols);
-
-			console.log("initial row " + iRow + "initial col " + iCol);
-			console.log("index " + index);
-
-			grid[index] = iPos;
+			const treeActor: PhysicsActor = new PhysicsActor(treeDesc);
+			treeActor.setShadowSetting({canCast: true, canRecieve: true});
+			treeActor.addToScene(this.gameScene);
 			
-            activePoints.push(iPos);
-
-            const tree: Group = this.resourceModule.getAsset("sm_rock_moss_07") as Group;
-			
-            for (let i = 0; i < grid.length; i++)
-            {
-			
-                if (grid[i] != -1)
-                {
-                    const clonedTree = tree.clone();
-                    clonedTree.scale.set(0.02, 0.02, 0.02);
-					
-					const treeDesc: ActorDesc = 
-					{
-						geometry: new BoxGeometry(1, 1, 1),
-						material: new MeshStandardMaterial(),
-						colliderDesc: RAPIER.ColliderDesc.cylinder(2.5, 1),
-						group: clonedTree
-					};
-					
-					const treeActor: PhysicsActor = new PhysicsActor(treeDesc);
-                    treeActor.Mesh!.receiveShadow = true;
-					treeActor.Mesh!.castShadow = true;
-                    treeActor.addToScene(this.gameScene);
-                    const pos = grid[i] as Vector2;
-                    console.log("Grid Pos X: " + pos.x + "Grid Pos Z: " + pos.y);
-
-                    treeActor.Root!.position.x = pos.x;
-                    treeActor.Root!.position.z = pos.y;
-                    treeActor.updatePositionAndRotation();
-                }
-            }
-        }
-    }
-
+			this.sampler!.sample(treePosition);
+			treeActor.Root!.position.x = treePosition.x;
+			treeActor.Root!.position.z = treePosition.y;
+			treeActor.Root!.scale.set(1, 1, 1);
+			treeActor.Root!.rotation.set(0, Math.random() * Math.PI * 2, 0);
+			treeActor.updatePositionAndRotation();
+		}
+	}
+	
     public update(dt: number): void
     {
         if(this.player == undefined) return;

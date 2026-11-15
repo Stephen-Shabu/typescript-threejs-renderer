@@ -92,6 +92,16 @@
           "alias": "sm_tree_01",
           "type": "fbx",
           "src": "./assets/models/enivronment/sm_tree_1.fbx"
+        },
+		{
+          "alias": "sm_common_grass_01",
+          "type": "gltf",
+          "src": "./assets/models/enivronment/sm_grass.gltf"
+        },
+		{
+          "alias": "sm_common_grass_02",
+          "type": "gltf",
+          "src": "./assets/models/enivronment/sm_grass_dense.gltf"
         }
       ]
     },

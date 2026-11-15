@@ -223,12 +223,12 @@ export class MainGameState extends GameState
 		const grassInstance = new InstancedMesh(grassMesh!.geometry, new MeshStandardMaterial({color:0x006400}), 1000);
 		
 		const dummy = new Object3D();
-		const grassPosition = new Vector3();
+		const position = new Vector3();
 		
 		for (let i = 0; i < 1000; i++) 
 		{
-			this.sampler!.sample(grassPosition);
-			dummy.position.set(grassPosition.x, 0, grassPosition.y);
+			this.sampler!.sample(position);
+			dummy.position.set(position.x, 0, position.y);
 			dummy.scale.set(3, 3, 3);
 			dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
 			dummy.updateMatrix();
@@ -240,7 +240,6 @@ export class MainGameState extends GameState
 		this.gameScene.add(grassInstance);
 
 		const treeResource = this.resourceModule.getAsset("sm_common_tree_01");
-		const treePosition = new Vector3();
 		
 		for(let i = 0; i < 10; i++)
 		{
@@ -258,9 +257,9 @@ export class MainGameState extends GameState
 			treeActor.setShadowSetting({canCast: true, canRecieve: true});
 			treeActor.addToScene(this.gameScene);
 			
-			this.sampler!.sample(treePosition);
-			treeActor.Root!.position.x = treePosition.x;
-			treeActor.Root!.position.z = treePosition.y;
+			this.sampler!.sample(position);
+			treeActor.Root!.position.x = position.x;
+			treeActor.Root!.position.z = position.y;
 			treeActor.Root!.scale.set(1, 1, 1);
 			treeActor.Root!.rotation.set(0, Math.random() * Math.PI * 2, 0);
 			treeActor.updatePositionAndRotation();

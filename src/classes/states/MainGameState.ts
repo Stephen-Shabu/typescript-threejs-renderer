@@ -7,7 +7,7 @@ import { HemisphereLight } from "three/src/lights/HemisphereLight";
 import { DirectionalLight } from "three/src/lights/DirectionalLight";
 import { PlaneGeometry } from "three/src/geometries/PlaneGeometry";
 import { Group } from "three/src/objects/Group.js";
-import { MeshStandardMaterial, Vector2, Mesh, CameraHelper, InstancedMesh, Matrix4} from "three";
+import { MeshStandardMaterial, Vector2, Mesh, CameraHelper, InstancedMesh, Matrix4, InstancedBufferAttribute} from "three";
 import { Texture } from "three";
 import { BoxGeometry } from "three";
 import { CapsuleGeometry } from "three";
@@ -26,6 +26,8 @@ import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 import MessageBus from "../messages/MessageBus";
 import { MobDiedMessage } from "../messages/Messages";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
+import { GrassMaterial } from "../../materials/GrassMaterial";
+import { applyFogOfWar } from "../../materials/FogOfWarApplier";
 
 export class MainGameState extends GameState
 {
@@ -48,13 +50,14 @@ export class MainGameState extends GameState
         {
 			const playerResource = this.resourceModule.getAsset("sm_lone_spartan");
 			const playerClone = SkeletonUtils.clone(playerResource.scene) as Group;
-
+			const mat = new MeshStandardMaterial();
+			applyFogOfWar(mat);
 			if(playerClone)
 			{
 				this.player = new PlayerActor(
 				{
 					skinnedRoot: playerClone,
-					material: new MeshStandardMaterial(),
+					material: mat,
 					visualOffset: new Vector3(0, -1, 0),
 					colliderDesc: RAPIER.ColliderDesc.capsule(0.5, 0.5)
 					.setCollisionGroups((CollisionGroup.PLAYER << 16 ) | CollisionGroup.WORLD | CollisionGroup.ENEMY),
@@ -220,10 +223,15 @@ export class MainGameState extends GameState
 		
 		const grassClone = grassDenseResource.scene.clone() as Group;
 		const grassMesh = UtilityFunctions.getMesh(grassClone);
-		const grassInstance = new InstancedMesh(grassMesh!.geometry, new MeshStandardMaterial({color:0x006400}), 1000);
+		const grassInstance = new InstancedMesh(grassMesh!.geometry, GrassMaterial, 1000);
+		
+		GrassMaterial.uniforms.uBaseColor.value = new Color(0x9ACD32);
+		GrassMaterial.uniforms.uTipColor.value = new Color(0xF5DEB3);
 		
 		const dummy = new Object3D();
 		const position = new Vector3();
+		const phases = new Float32Array(1000);
+		const amplitudes = new Float32Array(1000);
 		
 		for (let i = 0; i < 1000; i++) 
 		{
@@ -233,10 +241,16 @@ export class MainGameState extends GameState
 			dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
 			dummy.updateMatrix();
 			
+			phases[i] = Math.random() * Math.PI * 2
+			amplitudes[i] = 0.5 + Math.random() * 0.5
+			
 			grassInstance.setMatrixAt(i, dummy.matrix);
 		}
-	
+		grassMesh!.geometry.setAttribute('phase', new InstancedBufferAttribute(phases, 1));
+		grassMesh!.geometry.setAttribute('amplitude', new InstancedBufferAttribute(amplitudes, 1));
+		grassInstance.castShadow = true;
 		grassInstance.instanceMatrix.needsUpdate = true;
+		
 		this.gameScene.add(grassInstance);
 
 		const treeResource = this.resourceModule.getAsset("sm_common_tree_01");
@@ -245,11 +259,12 @@ export class MainGameState extends GameState
 		{
 			const clonedTree = treeResource.scene.clone() as Group;
 			const meshes = UtilityFunctions.getMeshes(clonedTree);
-			
+			const mat = new MeshStandardMaterial();
+			applyFogOfWar(mat);
 			const treeDesc: ActorDesc = 
 			{
 				geometries: meshes.map(mesh => mesh.geometry),
-				material: new MeshStandardMaterial(),
+				material: mat,
 				colliderDesc: RAPIER.ColliderDesc.cylinder(2.5, 0.3),
 			};
 			
@@ -280,5 +295,7 @@ export class MainGameState extends GameState
 		
         this.gameCamera.updateOrbit(characterPos, orbitDirection, 10, dt);
         this.gameCamera.View.lookAt(characterPos);
+		
+		GrassMaterial.uniforms.uTime.value += dt;
     }
 }
